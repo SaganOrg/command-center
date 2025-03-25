@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
@@ -10,10 +10,10 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const AssistantSignup = ({params}) => {
+const AssistantSignup = ({ params }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authError, setAuthError] = (useState < string) | (null > null);
 
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -52,7 +52,7 @@ const AssistantSignup = ({params}) => {
       .select("*")
       .eq("id", id)
       .maybeSingle();
-
+    console.log(user);
     if (userError || !user) {
       setAuthError("Owner Code is not correct or no user found!");
       setIsLoading(false);
@@ -64,6 +64,7 @@ const AssistantSignup = ({params}) => {
       setIsLoading(false);
       return;
     }
+
     if (signupPassword.length < 6) {
       setAuthError("Password must be at least 6 characters");
       setIsLoading(false);

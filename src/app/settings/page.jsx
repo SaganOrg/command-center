@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from "react";
 
 import {
@@ -48,7 +48,6 @@ const Settings = () => {
       }
       if (user) {
         console.log(user);
-        
       } else {
         toast({
           variant: "destructive",
@@ -63,8 +62,11 @@ const Settings = () => {
 
   // Function to send email via Brevo REST API
   const sendInviteEmail = async (recipientEmail) => {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-    const { data: { user }, error } = await supabase.auth.getUser()
     if (error) {
       console.error("Error fetching user:", error);
       toast({
@@ -75,45 +77,94 @@ const Settings = () => {
       return;
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
-    const signupLink = `https://sagancommandcenter.vercel.app/assistant-signup/${user.id}`; // Replace with your actual signup URL
+    // Normalize the email to lowercase for case-insensitive comparison
+    const normalizedEmail = recipientEmail.toLowerCase();
 
-    const emailData = {
-      sender: {
-        name: "Sagan",
-        email: "jon@getsagan.com", // Replace with your verified sender email
-      },
-      to: [{ email: recipientEmail, name: "Recipient Name" }],
-      subject: "Invitation to Join as an Assistant",
-      htmlContent: `
-        <p>Hello,</p>
-        <p>You’ve been invited to join as an assistant on our platform!</p>
-        <p>Please click the link below to sign up:</p>
-        <p><a href="${signupLink}">${signupLink}</a></p>
-        <p>Best regards,<br>Your Team</p>
-      `,
-    };
+    // Query the users table with a case-insensitive match
+    const { data: userFound, error: userFoundError } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("email", normalizedEmail); // Use ilike for case-insensitive matching
 
-    try {
-      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "accept": "application/json",
-          "api-key": apiKey,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(emailData),
+    if (userFoundError) {
+      console.error("Error fetching user:", userFoundError);
+      toast({
+        variant: "destructive",
+        title: "Error Checking Email",
+        description:
+          "Could not check if email is registered. Please try again.",
       });
+      return;
+    }
 
-      if (response.ok) {
-        return true;
-      } else {
-        const errorData = await response.json();
-        throw new Error(`Failed to send email: ${errorData.message || response.statusText}`);
+    // Ensure userFound is an array before checking length
+    if (!Array.isArray(userFound)) {
+      console.error("userFound is not an array:", userFound);
+      toast({
+        variant: "destructive",
+        title: "Unexpected Error",
+        description: "Invalid response from server. Please try again.",
+      });
+      return;
+    }
+
+    // Check if the email is already registered
+    if (userFound.length > 0) {
+      console.log("Email already registered:", userFound);
+      toast({
+        variant: "destructive",
+        title: "Email Already Registered",
+        description: `This email is already registered as an ${userFound[0].role}`,
+      });
+      return;
+    } else {
+      const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
+      const signupLink = `https://sagancommandcenter.vercel.app/assistant-signup/${user.id}`; // Replace with your actual signup URL
+
+      const emailData = {
+        sender: {
+          name: "Sagan",
+          email: "jon@getsagan.com", // Replace with your verified sender email
+        },
+        to: [{ email: recipientEmail, name: "Recipient Name" }],
+        subject: "Invitation to Join as an Assistant",
+        htmlContent: `
+      <p>Hello,</p>
+      <p>You’ve been invited to join as an assistant on our platform!</p>
+      <p>Please click the link below to sign up:</p>
+      <p><a href="${signupLink}">${signupLink}</a></p>
+      <p>Best regards,<br>Your Team</p>
+    `,
+      };
+
+      try {
+        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "api-key": apiKey,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(emailData),
+        });
+
+        if (response.ok) {
+          toast({
+            title: "Invitation Sent",
+            description: `We've sent an invitation to ${email}`,
+          });
+          setEmail("");
+          return true;
+        } else {
+          const errorData = await response.json();
+          throw new Error(
+            `Failed to send email: ${errorData.message || response.statusText}`
+          );
+        }
+      } catch (error) {
+        console.error("Error sending email:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error sending email:", error);
-      throw error;
     }
   };
 
@@ -123,11 +174,6 @@ const Settings = () => {
 
     try {
       await sendInviteEmail(email);
-      toast({
-        title: "Invitation Sent",
-        description: `We've sent an invitation to ${email}`,
-      });
-      setEmail("");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -176,64 +222,62 @@ const Settings = () => {
   }, [toast]);
 
   return (
-   
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 md:px-6"
-      >
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account and preferences
-          </p>
-        </div>
-        {userRole === "executive" && (
-          <div className="grid gap-8">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <UserPlus className="h-5 w-5 text-primary" />
-                  <CardTitle>Share Account</CardTitle>
-                </div>
-                <CardDescription>
-                  Invite team members to collaborate with you
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleInvite} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-grow">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          placeholder="colleague@example.com"
-                          required
-                        />
-                      </div>
-                      <Button type="submit" disabled={isSubmitting || !email}>
-                        {isSubmitting ? "Sending..." : "Send Invite"}
-                      </Button>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 md:px-6"
+    >
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage your account and preferences
+        </p>
+      </div>
+      {userRole === "executive" && (
+        <div className="grid gap-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2 mb-2">
+                <UserPlus className="h-5 w-5 text-primary" />
+                <CardTitle>Share Account</CardTitle>
+              </div>
+              <CardDescription>
+                Invite team members to collaborate with you
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleInvite} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-grow">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        placeholder="colleague@example.com"
+                        required
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      The invited user will receive an email with instructions
-                      to join your account.
-                    </p>
+                    <Button type="submit" disabled={isSubmitting || !email}>
+                      {isSubmitting ? "Sending..." : "Send Invite"}
+                    </Button>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </motion.div>
-   
+                  <p className="text-sm text-muted-foreground mt-2">
+                    The invited user will receive an email with instructions to
+                    join your account.
+                  </p>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </motion.div>
   );
 };
 

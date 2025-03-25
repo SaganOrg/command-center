@@ -44,10 +44,16 @@ const UpdatePassword = () => {
 
       if (error) throw error;
 
-      setSuccessMessage("Password updated successfully! Redirecting to login...");
-      setTimeout(() => navigate.push("/login"), 2000); // Redirect after 2s
+      setSuccessMessage("Password updated successfully! Redirecting to projects...");
+      setTimeout(() => navigate.push("/projects"), 2000); // Redirect after 2s
     } catch (error) {
       setAuthError(error.message || "Failed to update password. Please try again.");
+      const { error:signoutError } = await supabase.auth.signOut();
+          if (signoutError) {
+            console.error("Logout error:", error.message);
+          } else {
+            navigate.push("/login");
+          }
     } finally {
       setIsLoading(false);
     }

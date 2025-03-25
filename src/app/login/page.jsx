@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
 
+
 // Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -54,14 +55,24 @@ const Login = () => {
       password: loginPassword,
     });
 
+    const { data: {user }, error: userError } = await supabase.from("users").select("*").eq("id", data.user.id);
+
+    if (userError) {
+      setAuthError(error.message || "Login failed. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
     if (error) {
       setAuthError(error.message || "Login failed. Please try again.");
       setIsLoading(false);
       return;
     }
 
+    
+
     console.log("Logged in user:", data.user);
-    const role = data.user.user_metadata.role;
+    const role = user.role;
     if (role === "executive") {
       navigate.push("/voice"); // Adjust route as needed
     } else if (role === "assistant") {
@@ -101,11 +112,11 @@ const Login = () => {
     const { data, error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
-      options: {
-        data: {
-          role: "executive", // Signup from this page is for employees
-        },
-      },
+      // options: {
+      //   data: {
+      //     role: "executive", // Signup from this page is for employees
+      //   },
+      // },
     });
 
     if (data.user) {
@@ -113,7 +124,7 @@ const Login = () => {
 
       const { error: updateError } = await supabase
         .from("users")
-        .insert({ id: userId, email: data.user.email })
+        .insert({ id: userId, email: data.user.email, role:"executive", full_name:signupName })
         .select();
 
       if (updateError) {
@@ -122,7 +133,7 @@ const Login = () => {
           updateError
         );
         setAuthError(
-          "Signup successful, but failed to link assistant to employee."
+          "Please try again later"
         );
         setIsLoading(false);
         return;
@@ -136,8 +147,9 @@ const Login = () => {
     }
 
     console.log("Signed up employee:", data.user);
-    setAuthError("Check your email to confirm your account!");
+    setAuthError("Signup success as an executive");
     setIsLoading(false);
+    navigate.push("/");
   };
 
   const handleForgotPasswordSubmit = async (e) => {
@@ -194,18 +206,16 @@ const Login = () => {
     setIsLoading(true);
     setAuthError(null);
 
+    
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:8080", // Adjust redirect URL
-        data: {
-          // full_name: user_id,
-          role: "assistant",
-          // owner_id: user_id,
-        },
+        redirectTo: "http://localhost:3000", // Adjust redirect URL
       },
+      
     });
-
+console.log("alksdjfl alskjdf lgoogle data....",data)
     if (error) {
       setAuthError(error.message || "Google signup failed.");
       setIsLoading(false);

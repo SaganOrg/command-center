@@ -4,6 +4,7 @@ import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import Hero from "../components/Hero";
 import AnimatedTransition from "../components/AnimatedTransition";
+import { supabase } from '@/lib/supabase'
 
 const features = [
   {
@@ -37,6 +38,92 @@ const features = [
 ];
 
 export default function Home() {
+
+  const updateUserInTable = async (user) => {
+    if (!user) return;
+
+    try {
+      // Check if the user already exists in the users table
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        // PGRST116 means "no rows found", which is expected for new users
+        console.error("Error checking user in users table:", fetchError);
+        return;
+      }
+
+      if (existingUser) {
+        // User already exists; optionally update their info
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+            updated_at: new Date().toISOString(),
+            role:"executive"
+          })
+          .eq("id", user.id);
+
+        if (updateError) {
+          console.error("Error updating user in users table:", updateError);
+        } else {
+          console.log("User updated in users table:", user.id);
+        }
+      } else {
+        // New user; insert into the users table
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert({
+            id: user.id, // Use the Supabase auth user ID
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            role:"executive"
+          });
+
+        if (insertError) {
+          console.error("Error inserting user into users table:", insertError);
+        } else {
+          console.log("User added to users table:", user.id);
+        }
+      }
+    } catch (error) {
+      console.error("Unexpected error updating users table:", error);
+    }
+  };
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth event:", event, "Session:", session);
+
+        if (event === "SIGNED_IN" && session?.user) {
+          // User has signed in; update the users table
+          await updateUserInTable(session.user);
+        }
+      }
+    );
+
+    // Check if the user is already signed in on page load
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await updateUserInTable(user);
+      }
+    };
+    checkUser();
+
+    // Cleanup the listener on component unmount
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
  
 
   return (
