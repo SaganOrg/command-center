@@ -167,18 +167,6 @@ const TaskForm = ({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-700">
-              <FileText className="h-4 w-4 text-gray-500" />
-              <span>Assigned To (UUID)</span>
-            </div>
-            <Input
-              value={newTask.assigned_to || ''}
-              onChange={(e) => handleChange('assigned_to', e.target.value)}
-              placeholder="Enter assignee UUID"
-            />
-          </div>
           
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-1">
