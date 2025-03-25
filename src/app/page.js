@@ -1,103 +1,125 @@
-import Image from "next/image";
+"use client";
+
+import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
+import FeatureCard from "../components/FeatureCard";
+import Hero from "../components/Hero";
+import AnimatedTransition from "../components/AnimatedTransition";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const features = [
+    {
+      icon: ClipboardList,
+      title: "End-of-Day Reports",
+      description:
+        "Structured daily check-ins to keep everyone aligned on priorities, progress, and needs.",
+      href: "/reports",
+    },
+    {
+      icon: BookOpen,
+      title: "Reference Library",
+      description:
+        "A shared knowledge base for quick access to critical information and processes.",
+      href: "/library",
+    },
+    {
+      icon: LayoutGrid,
+      title: "Project Tracker",
+      description:
+        "Visual task management with customizable Kanban-style workflows.",
+      href: "/tasks",
+    },
+    {
+      icon: Mic,
+      title: "Voice Task Upload",
+      description:
+        "Record, transcribe, and transform voice notes into actionable tasks.",
+      href: "/voice",
+    },
+  ];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  return (
+    <div>
+      <AnimatedTransition>
+        <Hero />
+        <section className="py-16 bg-secondary/50">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <h2 className="mb-4">Streamlined Features</h2>
+              <p className="text-muted-foreground">
+                Everything you need to collaborate efficiently, with no
+                unnecessary complexity.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((feature, index) => (
+                <FeatureCard
+                  key={feature.title}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  delay={index * 0.1}
+                  href={feature.href}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-2xl border/90">
+              <div className="p-8">
+                <h2 className="mb-4 text-center">Why This App?</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                  {[
+                    {
+                      title: "No Bloat",
+                      desc: "Just essential features, without unnecessary complexity.",
+                    },
+                    {
+                      title: "Real-time Collaboration",
+                      desc: "Built for seamless EA-boss workflows and communication.",
+                    },
+                    {
+                      title: "Centralized Information",
+                      desc: "All tasks, reports, and information in one accessible place.",
+                    },
+                    {
+                      title: "Beautiful Design",
+                      desc: "Elegant, minimalist interface inspired by Apple's design principles.",
+                    },
+                  ].map((item) => (
+                    <div key={item.title} className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium mb-1">
+                          {item.title}
+                        </h3>
+                        <p className="text-muted-foreground">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </AnimatedTransition>
     </div>
   );
 }
