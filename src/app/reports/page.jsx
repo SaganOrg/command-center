@@ -6,6 +6,7 @@ import ReportForm from "@/components/ReportForm";
 import ReportHistory from "@/components/ReportHistory";
 import { createClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -16,6 +17,8 @@ const supabase = createClient(
 const Reports = () => {
   const [userRole, setUserRole] = useState(null);
   const { toast } = useToast();
+
+  const router = useRouter();
 
   // Fetch user role on mount
   useEffect(() => {
@@ -31,16 +34,18 @@ const Reports = () => {
           title: "Authentication Error",
           description: "Could not verify user. Please log in again.",
         });
+        router.push("/login")
         return;
       }
       if (user) {
-        setUserRole(user.user_metadata.role || null);
+        // setUserRole(user.user_metadata.role || null);
       } else {
         toast({
           variant: "destructive",
           title: "Not Logged In",
           description: "Please log in to access reports.",
         });
+        router.push("/login");
       }
     };
     fetchUserRole();

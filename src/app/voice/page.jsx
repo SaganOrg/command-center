@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import OpenAI from "openai";
-import {supabase} from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from "next/navigation"; 
 
 
 // Initialize OpenAI client with environment variable safely
@@ -41,6 +42,7 @@ const Voice = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const { toast } = useToast();
+  const router = useRouter()
 
   // Fetch user role on mount
   useEffect(() => {
@@ -56,6 +58,7 @@ const Voice = () => {
           title: "Authentication Error",
           description: "Could not verify user. Please log in again.",
         });
+        router.push("/login")
         return;
       }
       if (user) {

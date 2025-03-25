@@ -71,6 +71,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -82,6 +83,8 @@ const Library = () => {
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const { toast } = useToast();
+
+  const router = useRouter();
 
   // Fetch user role and ID on mount
   useEffect(() => {
@@ -97,6 +100,7 @@ const Library = () => {
           title: "Authentication Error",
           description: "Could not verify user. Please log in again.",
         });
+        router.push("/login");
         return;
       }
       if (user) {
@@ -113,6 +117,7 @@ const Library = () => {
           title: "Not Logged In",
           description: "Please log in to access reports.",
         });
+        router.push("/login");
       }
     };
     fetchUserRole();

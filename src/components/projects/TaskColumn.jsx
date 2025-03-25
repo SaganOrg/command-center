@@ -145,7 +145,7 @@ const TaskColumn = ({
     if (a.order !== undefined && b.order !== undefined) {
       return a.order - b.order;
     }
-    return 0;
+    return;
   });
 
   return (

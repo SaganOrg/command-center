@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -26,6 +27,39 @@ const Settings = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Could not verify user. Please log in again.",
+        });
+        router.push("/login");
+        return;
+      }
+      if (user) {
+        console.log(user);
+        
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Not Logged In",
+          description: "Please log in to access reports.",
+        });
+        router.push("/login");
+      }
+    };
+    fetchUserRole();
+  }, [toast]);
 
   // Function to send email via Brevo REST API
   const sendInviteEmail = async (recipientEmail) => {

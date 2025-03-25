@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const TaskForm = ({ 
   task, 
   onSave, 
+  handleDelete,
   onCancel, 
   statuses, 
   initialStatus 
@@ -330,8 +331,14 @@ const TaskForm = ({
         </TabsContent>
       </Tabs>
       
-      <div className="flex justify-end gap-2 pt-6 mt-6 border-t">
-        <Button variant="outline" onClick={onCancel} size="sm">
+      <div className="flex justify-between gap-2 pt-6 mt-6 border-t">
+        <div>
+        <Button variant="destructive" onClick={handleDelete} size="sm">
+          <X className="h-4 w-4 mr-1" />
+          Delete task
+        </Button>
+        </div>
+      <div className='flex gap-2'><Button variant="outline" onClick={onCancel} size="sm">
           <X className="h-4 w-4 mr-1" />
           Cancel
         </Button>
@@ -343,7 +350,8 @@ const TaskForm = ({
         >
           <Check className="h-4 w-4 mr-1" />
           {task ? 'Save Changes' : 'Create Project'}
-        </Button>
+        </Button></div>
+        
       </div>
     </Card>
   );

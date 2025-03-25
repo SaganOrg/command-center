@@ -197,6 +197,7 @@ const TaskEditDialog = ({
             <TaskForm
               task={editedTask}
               onSave={handleSave}
+              handleDelete={handleDelete}
               onCancel={onClose}
               statuses={Object.keys(statusStyles).map((id) => ({
                 id,

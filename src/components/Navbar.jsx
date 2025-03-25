@@ -85,7 +85,7 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = (async () => {
     if (!supabase) {
       console.warn("Supabase not initialized, cannot logout");
       navigate.push("/login");
@@ -97,11 +97,11 @@ const Navbar = () => {
     } else {
       navigate.push("/login");
     }
-  }, [navigate]);
+  });
   
-  const handleLogin = useCallback(() => {
+  const handleLogin = (() => {
     navigate.push("/login");
-  }, [navigate]);
+  });
 
   return (
     <nav className="bg-background border-b border-border/30 py-2 px-4">
@@ -132,18 +132,6 @@ const Navbar = () => {
                 </Button>
               ))}
           </div>
-          {!isLoggedIn && (
-            <a href="/assistant-signup">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center px-2 mx-2"
-              >
-                <span>Assistant Signup</span>
-              </Button>
-            </a>
-          )}
-
           {/* Public Login button (converts to Logout when logged in) */}
           <Button
             variant="outline"

@@ -30,7 +30,7 @@ import TaskEditDialog from "@/components/projects/TaskEditDialog";
 import ColumnCarousel from "@/components/projects/ColumnCarousel";
 import ProjectsGrid from "@/components/projects/ProjectsGrid";
 import { createClient } from "@supabase/supabase-js";
-
+import { useRouter } from "next/navigation";
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -58,6 +58,44 @@ const Projects = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [userRole, setUserRole] = useState(null);
   const { toast } = useToast();
+
+  const router = useRouter();
+
+  useEffect(() => {
+      const fetchUserRole = async () => {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Error fetching user:", error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Could not verify user. Please log in again.",
+          });
+          router.push("/login");
+          return;
+        }
+        if (user) {
+          console.log(user);
+          setUserRole(user.user_metadata.role || null);
+          if (user.user_metadata.role === "assistant") {
+            setUserId(user.user_metadata.owner_id || null);
+          } else {
+            setUserId(user.id || null); // For executives, use their own ID
+          }
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Not Logged In",
+            description: "Please log in to access reports.",
+          });
+          router.push("/login");
+        }
+      };
+      fetchUserRole();
+    }, [toast]);
 
   useEffect(() => {
     fetchTasksAndComments();
