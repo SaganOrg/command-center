@@ -13,8 +13,8 @@ const supabase = createClient(
 const AssistantSignup = ({ params }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = (useState < string) | (null > null);
-
+  const [authError, setAuthError] = (useState) | (null > null);
+  const [signupName, setSignupName] = useState("")
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
@@ -79,13 +79,13 @@ const AssistantSignup = ({ params }) => {
     const { data, error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
-      options: {
-        data: {
-          full_name: id, // Using user_id as full_name (adjust if needed)
-          role: "assistant",
-          owner_id: id,
-        },
-      },
+      // options: {
+      //   data: {
+      //     full_name: id, // Using user_id as full_name (adjust if needed)
+      //     role: "assistant",
+      //     owner_id: id,
+      //   },
+      // },
     });
 
     if (error) {
@@ -97,18 +97,24 @@ const AssistantSignup = ({ params }) => {
     if (data.user) {
       const assistantId = data.user.id;
 
+      const { error: insertError } = await supabase
+      .from("users")
+      .insert({ id: data.user.id, email: data.user.email, role:"assistant", full_name:signupName, executive_id:id })
+      .select();
+
+
       const { error: updateError } = await supabase
         .from("users")
         .update({ assistant_id: assistantId })
         .eq("id", id);
 
-      if (updateError) {
+      if (updateError || insertError) {
         console.error(
           "Error updating assistant_id in users table:",
           updateError
         );
         setAuthError(
-          "Signup successful, but failed to link assistant to employee."
+          "Signup has a problem"
         );
         setIsLoading(false);
         return;
@@ -201,8 +207,8 @@ const AssistantSignup = ({ params }) => {
               <input
                 type="text"
                 placeholder="Full name"
-                value={""}
-                disabled
+                value={signupName}
+                onChange={(e) => setSignupName(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "8px 8px 8px 36px",

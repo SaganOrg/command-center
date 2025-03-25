@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import Hero from "../components/Hero";
@@ -58,21 +59,22 @@ export default function Home() {
 
       if (existingUser) {
         // User already exists; optionally update their info
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
-            updated_at: new Date().toISOString(),
-            role:"executive"
-          })
-          .eq("id", user.id);
+        // const { error: updateError } = await supabase
+        //   .from("users")
+        //   .update({
+        //     email: user.email,
+        //     full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+        //     updated_at: new Date().toISOString(),
+        //     role:"executive"
+        //   })
+        //   .eq("id", user.id);
 
-        if (updateError) {
-          console.error("Error updating user in users table:", updateError);
-        } else {
-          console.log("User updated in users table:", user.id);
-        }
+        // if (updateError) {
+        //   console.error("Error updating user in users table:", updateError);
+        // } else {
+        //   console.log("User updated in users table:", user.id);
+        // }
+        
       } else {
         // New user; insert into the users table
         const { error: insertError } = await supabase
@@ -107,17 +109,20 @@ export default function Home() {
           // User has signed in; update the users table
           await updateUserInTable(session.user);
         }
+        // else {
+        //   checkUser();
+        // }
       }
     );
 
-    // Check if the user is already signed in on page load
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await updateUserInTable(user);
-      }
-    };
-    checkUser();
+    // // Check if the user is already signed in on page load
+    // const checkUser = async () => {
+    //   const { data: { user } } = await supabase.auth.getUser();
+    //   if (user) {
+    //     await updateUserInTable(user);
+    //   }
+    // };
+    
 
     // Cleanup the listener on component unmount
     return () => {

@@ -27,6 +27,7 @@ const Settings = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [userRole, setUserRole] = useState("");
 
   const router = useRouter();
 
@@ -47,7 +48,16 @@ const Settings = () => {
         return;
       }
       if (user) {
-        console.log(user);
+         const { data, error } = await supabase.from("users").select("*").eq("id", user.id);
+                if (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "Not Logged In",
+                    description: "Please log in to use voice features.",
+                  });
+                } if (data[0].role) {
+                  setUserRole(data[0].role || null);
+                }
       } else {
         toast({
           variant: "destructive",
@@ -185,41 +195,9 @@ const Settings = () => {
     }
   };
 
-  const [userRole, setUserRole] = useState(null);
+
   const [userId, setUserId] = useState(null);
 
-  // Fetch user role and ID on mount
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Could not verify user. Please log in again.",
-        });
-        return;
-      }
-      if (user) {
-        console.log(user);
-        setUserRole(user.user_metadata.role || null);
-        if (user.user_metadata.role === "executive") {
-          setUserId(user.id || null);
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Not Logged In",
-          description: "Please log in to access reports.",
-        });
-      }
-    };
-    fetchUserRole();
-  }, [toast]);
 
   return (
     <motion.div

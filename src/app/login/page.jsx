@@ -55,7 +55,9 @@ const Login = () => {
       password: loginPassword,
     });
 
-    const { data: {user }, error: userError } = await supabase.from("users").select("*").eq("id", data.user.id);
+    console.log(data)
+
+    const { data: userData , error: userError } = await supabase.from("users").select("*").eq("id", data.user.id);
 
     if (userError) {
       setAuthError(error.message || "Login failed. Please try again.");
@@ -71,8 +73,8 @@ const Login = () => {
 
     
 
-    console.log("Logged in user:", data.user);
-    const role = user.role;
+    console.log("Logged in user:", userData);
+    const role = userData[0].role;
     if (role === "executive") {
       navigate.push("/voice"); // Adjust route as needed
     } else if (role === "assistant") {
