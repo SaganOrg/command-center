@@ -39,6 +39,17 @@ const Reports = () => {
       }
       if (user) {
         // setUserRole(user.user_metadata.role || null);
+
+         const { data, error } = await supabase.from("users").select("*").eq("id", user.id);
+                if (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "Not Logged In",
+                    description: "Please log in to use voice features.",
+                  });
+                } if (data[0].role) {
+                  setUserRole(data[0].role || null);
+                }
       } else {
         toast({
           variant: "destructive",

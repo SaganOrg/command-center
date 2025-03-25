@@ -128,7 +128,7 @@ const AssistantSignup = ({ params }) => {
 
     // setAuthError("Check your email to confirm your account!");
     setIsLoading(false);
-    navigate("/");
+    navigate.push("/");
     // Optionally redirect to login after signup
     // setTimeout(() => navigate('/login'), 2000);
   };
