@@ -163,14 +163,14 @@ const TaskEditDialog = ({
               ></div>
               <DialogTitle className="text-xl">{editedTask.title}</DialogTitle>
             </div>
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-destructive"
               onClick={handleDelete}
             >
               <Trash2 className="h-5 w-5" />
-            </Button>
+            </Button> */}
           </div>
           <DialogDescription className="pt-2">
             <div className="flex items-center border-b">
