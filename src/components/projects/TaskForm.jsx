@@ -12,7 +12,6 @@ import { FileText, Target, Flag, CalendarDays, X, Check, ArrowRight, ArrowLeft }
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-
 const TaskForm = ({ 
   task, 
   onSave, 
@@ -27,9 +26,9 @@ const TaskForm = ({
     due_date: task?.due_date || format(new Date(), 'yyyy-MM-dd'),
     end_result: task?.end_result || '',
     purpose: task?.purpose || '',
-    labels: task?.labels || '', // Still in state, but not in UI
-    attachments: task?.attachments || '', // Still in state, but not in UI
-    created_by: task?.created_by || '', // Still in state, but not in UI
+    labels: task?.labels || '',
+    attachments: task?.attachments || '',
+    created_by: task?.created_by || '',
     assigned_to: task?.assigned_to || '',
   });
   const [selectedDate, setSelectedDate] = useState(
@@ -76,8 +75,9 @@ const TaskForm = ({
       taskToSave.comments = task.comments;
     }
     
-    console.log("Saving task:", taskToSave);
+    console.log("Saving task from TaskForm:", taskToSave); // Debug log
     onSave(taskToSave);
+    // Do NOT call onCancel here; let TaskEditDialog decide when to close
   };
 
   return (
@@ -122,8 +122,8 @@ const TaskForm = ({
               <span>Status</span>
             </div>
             <Select 
-              defaultValue={newTask.status}
-              onValueChange={(value) => handleChange('status')}
+              value={newTask.status} // Use value instead of defaultValue to reflect state
+              onValueChange={(value) => handleChange('status', value)} // Fix: Pass the new value
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select status" />

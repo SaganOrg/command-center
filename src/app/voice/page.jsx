@@ -6,13 +6,8 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
+import {supabase} from '@/lib/supabase'
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 // Initialize OpenAI client with environment variable safely
 const openai = (() => {

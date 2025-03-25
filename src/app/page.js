@@ -5,37 +5,39 @@ import FeatureCard from "../components/FeatureCard";
 import Hero from "../components/Hero";
 import AnimatedTransition from "../components/AnimatedTransition";
 
+const features = [
+  {
+    icon: ClipboardList,
+    title: "End-of-Day Reports",
+    description:
+      "Structured daily check-ins to keep everyone aligned on priorities, progress, and needs.",
+    href: "/reports",
+  },
+  {
+    icon: BookOpen,
+    title: "Reference Library",
+    description:
+      "A shared knowledge base for quick access to critical information and processes.",
+    href: "/library",
+  },
+  {
+    icon: LayoutGrid,
+    title: "Project Tracker",
+    description:
+      "Visual task management with customizable Kanban-style workflows.",
+    href: "/tasks",
+  },
+  {
+    icon: Mic,
+    title: "Voice Task Upload",
+    description:
+      "Record, transcribe, and transform voice notes into actionable tasks.",
+    href: "/voice",
+  },
+];
+
 export default function Home() {
-  const features = [
-    {
-      icon: ClipboardList,
-      title: "End-of-Day Reports",
-      description:
-        "Structured daily check-ins to keep everyone aligned on priorities, progress, and needs.",
-      href: "/reports",
-    },
-    {
-      icon: BookOpen,
-      title: "Reference Library",
-      description:
-        "A shared knowledge base for quick access to critical information and processes.",
-      href: "/library",
-    },
-    {
-      icon: LayoutGrid,
-      title: "Project Tracker",
-      description:
-        "Visual task management with customizable Kanban-style workflows.",
-      href: "/tasks",
-    },
-    {
-      icon: Mic,
-      title: "Voice Task Upload",
-      description:
-        "Record, transcribe, and transform voice notes into actionable tasks.",
-      href: "/voice",
-    },
-  ];
+ 
 
   return (
     <div>

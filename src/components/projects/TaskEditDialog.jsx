@@ -28,32 +28,33 @@ const TaskEditDialog = ({
   const [activeTab, setActiveTab] = useState("details");
   const { toast } = useToast();
 
+  // Initialize editedTask when task prop changes
   useEffect(() => {
     if (task) {
-      // Make a deep copy to prevent mutations
-      setEditedTask(JSON.parse(JSON.stringify(task)));
+      setEditedTask(JSON.parse(JSON.stringify(task))); // Deep copy
     }
   }, [task]);
 
+  // Prevent rendering until editedTask is ready
   if (!editedTask) return null;
 
   const handleSave = (updatedTask) => {
-    if (editedTask) {
-      // Create a complete updated task by merging the edited task with the new changes
-      const fullUpdatedTask = {
-        ...editedTask,
-        ...updatedTask,
-        // Ensure id is preserved
-        id: editedTask.id,
-      };
+    if (!editedTask) return;
 
-      console.log("Saving complete edited task:", fullUpdatedTask);
-      onSave(fullUpdatedTask);
-      toast({
-        title: "Project updated",
-        description: "Your project has been successfully updated.",
-      });
-    }
+    // Merge updatedTask with editedTask, ensuring id persists
+    const fullUpdatedTask = {
+      ...editedTask,
+      ...updatedTask,
+      id: editedTask.id,
+    };
+
+    console.log("Saving task with status:", fullUpdatedTask.status); // Debug log
+    onSave(fullUpdatedTask);
+    toast({
+      title: "Project updated",
+      description: "Your project has been successfully updated.",
+    });
+    // Do NOT call onClose here; let the parent decide when to close
   };
 
   const handleAddComment = (taskId, comment) => {
@@ -72,55 +73,21 @@ const TaskEditDialog = ({
     }
   };
 
-  // Fix status styles to include all possible statuses from our columns
   const statusStyles = {
-    todo: {
-      label: "To Do",
-      color: "bg-blue-500",
-      borderColor: "border-blue-500",
-    },
-    inbox: {
-      label: "Inbox",
-      color: "bg-slate-500",
-      borderColor: "border-slate-500",
-    },
-    confirmedreceived: {
-      label: "Confirmed/Received",
-      color: "bg-green-500",
-      borderColor: "border-green-500",
-    },
-    inprogress: {
-      label: "In Progress",
-      color: "bg-amber-500",
-      borderColor: "border-amber-500",
-    },
-    waiting: {
-      label: "Waiting",
-      color: "bg-orange-500",
-      borderColor: "border-orange-500",
-    },
-    review: {
-      label: "Ready for Review",
-      color: "bg-purple-500",
-      borderColor: "border-purple-500",
-    },
-    archive: {
-      label: "Archive",
-      color: "bg-gray-500",
-      borderColor: "border-gray-500",
-    },
-    done: {
-      label: "Done",
-      color: "bg-emerald-500",
-      borderColor: "border-emerald-500",
-    },
+    todo: { label: "To Do", color: "bg-blue-500", borderColor: "border-blue-500" },
+    inbox: { label: "Inbox", color: "bg-slate-500", borderColor: "border-slate-500" },
+    confirmedreceived: { label: "Confirmed/Received", color: "bg-green-500", borderColor: "border-green-500" },
+    inprogress: { label: "In Progress", color: "bg-amber-500", borderColor: "border-amber-500" },
+    waiting: { label: "Waiting", color: "bg-orange-500", borderColor: "border-orange-500" },
+    review: { label: "Ready for Review", color: "bg-purple-500", borderColor: "border-purple-500" },
+    archive: { label: "Archive", color: "bg-gray-500", borderColor: "border-gray-500" },
+    done: { label: "Done", color: "bg-emerald-500", borderColor: "border-emerald-500" },
   };
 
-  // Get color based on status with fallback
   const getStatusStyle = () => {
     return (
       statusStyles[editedTask.status] || {
-        label: editedTask.status,
+        label: editedTask.status || "Unknown",
         color: "bg-slate-500",
         borderColor: "border-slate-500",
       }
@@ -140,7 +107,6 @@ const TaskEditDialog = ({
     }
   };
 
-  // Function to navigate between tabs with keyboard arrows
   const handleKeyNavigation = (e) => {
     if (e.key === "ArrowRight" && activeTab === "details") {
       setActiveTab("comments");
@@ -163,6 +129,7 @@ const TaskEditDialog = ({
               ></div>
               <DialogTitle className="text-xl">{editedTask.title}</DialogTitle>
             </div>
+            {/* Uncomment if you want the delete button back */}
             {/* <Button
               variant="ghost"
               size="icon"
@@ -185,7 +152,6 @@ const TaskEditDialog = ({
                 >
                   Project Details
                 </button>
-
                 <button
                   className={`pb-2 pt-1 px-3 flex items-center ${
                     activeTab === "comments"
@@ -202,7 +168,6 @@ const TaskEditDialog = ({
                   )}
                 </button>
               </div>
-
               <div className="flex space-x-1">
                 <Button
                   variant="ghost"

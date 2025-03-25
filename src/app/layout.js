@@ -37,10 +37,10 @@ export default function RootLayout({ children }) {
             <Sonner />
             <div className="min-h-screen flex flex-col">
               <Navbar />
-              <main className="flex-1 pt-6 pb-24">
+              <main className="flex-1 pt-6 pb-6">
                 {" "}
                 {/* Increased bottom padding further */}
-                <AnimatePresence mode="wait">{children}</AnimatePresence>
+                <AnimatePresence >{children}</AnimatePresence>
               </main>
               <footer className="py-6 border-t border-border/30 bg-secondary/50">
                 <div className="container mx-auto px-4 md:px-6 text-center text-sm text-muted-foreground">

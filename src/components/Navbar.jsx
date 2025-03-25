@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -13,28 +13,38 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabase } from '@/lib/supabase'
 
-// Initialize Supabase client safely with environment variables
-const supabase = (() => {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // if (!supabaseUrl || !supabaseAnonKey) {
-    //   console.warn(
-    //     "Supabase credentials missing. Auth features will be disabled."
-    //   );
-    //   return null;
-    // }
-
-    return createClient(supabaseUrl, supabaseAnonKey);
-  } catch (error) {
-    console.error("Failed to initialize Supabase client:", error);
-    return null;
-  }
-})();
+const privateMenuItems = [
+  {
+    href: "/voice",
+    icon: <Mic className="h-4 w-4 mr-1" />,
+    label: "Voice Input",
+  },
+  {
+    href: "/projects",
+    icon: <ListChecks className="h-4 w-4 mr-1" />,
+    label: "Project Board",
+  },
+  {
+    href: "/reports",
+    icon: <ClipboardList className="h-4 w-4 mr-1" />,
+    label: "Reports",
+  },
+  {
+    href: "/attachments",
+    icon: <BookOpen className="h-4 w-4 mr-1" />,
+    label: "Reference",
+  },
+  {
+    href: "/settings",
+    icon: <Settings className="h-4 w-4 mr-1" />,
+    label: "Settings",
+  },
+];
 
 const Navbar = () => {
   const location = usePathname();
@@ -43,88 +53,55 @@ const Navbar = () => {
   const [loggedInUser, setLoggedInUser] = useState(false);
 
   // Private menu items (visible only when logged in)
-  const privateMenuItems = [
-    {
-      href: "/voice",
-      icon: <Mic className="h-4 w-4 mr-1" />,
-      label: "Voice Input",
-    },
-    {
-      href: "/projects",
-      icon: <ListChecks className="h-4 w-4 mr-1" />,
-      label: "Project Board",
-    },
-    {
-      href: "/reports",
-      icon: <ClipboardList className="h-4 w-4 mr-1" />,
-      label: "Reports",
-    },
-    {
-      href: "/attachments",
-      icon: <BookOpen className="h-4 w-4 mr-1" />,
-      label: "Reference",
-    },
-    {
-      href: "/settings",
-      icon: <Settings className="h-4 w-4 mr-1" />,
-      label: "Settings",
-    },
-  ];
+ 
 
   // Check authentication state on mount and listen for changes if Supabase is available
   useEffect(() => {
-    const checkSession = async () => {
-      if (!supabase) {
-        setIsLoggedIn(false);
-        return;
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    if (!supabase) {
+      setIsLoggedIn(false);
+      return;
+    }
+  
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
-      if (!!session) {
+      if (session) {
         setLoggedInUser(session.user.user_metadata);
       }
-    };
-
-    checkSession();
-
-    // Only set up listener if Supabase is initialized
-    if (supabase) {
-      const { data: authListener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          setIsLoggedIn(!!session);
-          console.log("Auth event:", event, "Session:", session);
+    });
+  
+    // Set up auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsLoggedIn(!!session);
+        if (session) {
+          setLoggedInUser(session.user.user_metadata);
         }
-      );
-
-      return () => {
-        authListener?.subscription.unsubscribe();
-      };
-    }
+      }
+    );
+  
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
-  // Handle logout
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     if (!supabase) {
       console.warn("Supabase not initialized, cannot logout");
       navigate.push("/login");
       return;
     }
-
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Logout error:", error.message);
     } else {
       navigate.push("/login");
     }
-  };
-
-  // Handle login navigation
-  const handleLogin = () => {
+  }, [navigate]);
+  
+  const handleLogin = useCallback(() => {
     navigate.push("/login");
-  };
+  }, [navigate]);
 
   return (
     <nav className="bg-background border-b border-border/30 py-2 px-4">
