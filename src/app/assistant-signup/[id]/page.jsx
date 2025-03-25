@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
+
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -13,14 +14,14 @@ const supabase = createClient(
 const AssistantSignup = ({ params }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = (useState) | (null > null);
+  const [authError, setAuthError] = useState(null);
   const [signupName, setSignupName] = useState("")
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
   const navigate = useRouter();
-  const { id } = params; // Extract user_id from URL params
+  const { id } = use(params); // Extract user_id from URL params
 
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -215,7 +216,7 @@ const AssistantSignup = ({ params }) => {
                   border: "1px solid #ddd",
                   borderRadius: "4px",
                   fontSize: "14px",
-                  backgroundColor: "#f0f0f0",
+                  backgroundColor: "#fff",
                 }}
               />
             </div>
