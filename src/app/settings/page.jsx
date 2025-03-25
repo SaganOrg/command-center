@@ -129,7 +129,7 @@ const Settings = () => {
       return;
     } else {
       const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
-      const signupLink = `https://sagancommandcenter.vercel.app/assistant-signup/${user.id}`; // Replace with your actual signup URL
+      const signupLink = `https://sagan-command-center.vercel.app/assistant-signup/${user.id}`; // Replace with your actual signup URL
 
       const emailData = {
         sender: {
