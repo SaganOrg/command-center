@@ -31,14 +31,15 @@ import ColumnCarousel from "@/components/projects/ColumnCarousel";
 import ProjectsGrid from "@/components/projects/ProjectsGrid";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-// Initialize Supabase client
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Projects = () => {
   const [tasks, setTasks] = useState([]);
-  const [comments, setComments] = useState([]); // New state for comments
+  const [comments, setComments] = useState([]);
+  const [users, setUsers] = useState({});
   const [columns] = useState([
     { id: "inbox", title: "Inbox" },
     { id: "confirmedreceived", title: "Confirmed Received" },
@@ -57,48 +58,36 @@ const Projects = () => {
   const [activeView, setActiveView] = useState("kanban");
   const [refreshKey, setRefreshKey] = useState(0);
   const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
   const { toast } = useToast();
-
   const router = useRouter();
 
   useEffect(() => {
-      const fetchUserRole = async () => {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) {
-          console.error("Error fetching user:", error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Could not verify user. Please log in again.",
-          });
-          router.push("/login");
-          return;
-        }
-        if (user) {
-          console.log(user);
-          setUserRole(user.user_metadata.role || null);
-          if (user.user_metadata.role === "assistant") {
-            setUserId(user.user_metadata.owner_id || null);
-          } else {
-            setUserId(user.id || null); // For executives, use their own ID
-          }
+    const fetchUserRole = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+        toast({ variant: "destructive", title: "Authentication Error", description: "Could not verify user. Please log in again." });
+        router.push("/login");
+        return;
+      }
+      if (user) {
+        setUserRole(user.user_metadata.role || null);
+        if (user.user_metadata.role === "assistant") {
+          setUserId(user.user_metadata.owner_id || null);
         } else {
-          toast({
-            variant: "destructive",
-            title: "Not Logged In",
-            description: "Please log in to access reports.",
-          });
-          router.push("/login");
+          setUserId(user.id || null);
         }
-      };
-      fetchUserRole();
-    }, [toast]);
+      } else {
+        toast({ variant: "destructive", title: "Not Logged In", description: "Please log in to access projects." });
+        router.push("/login");
+      }
+    };
+    fetchUserRole();
+  }, [toast, router]);
 
   useEffect(() => {
-    fetchTasksAndComments();
+    fetchTasksCommentsAndUsers();
   }, []);
 
   useEffect(() => {
@@ -106,7 +95,6 @@ const Projects = () => {
       const taskId = e.dataTransfer?.getData("taskId");
       if (taskId) setDraggedTaskId(taskId);
     };
-
     const handleGlobalDragEnd = () => setDraggedTaskId(null);
 
     document.addEventListener("dragstart", handleGlobalDragStart);
@@ -118,24 +106,13 @@ const Projects = () => {
     };
   }, []);
 
-  const fetchTasksAndComments = async () => {
+  const fetchTasksCommentsAndUsers = async () => {
     try {
       setIsLoading(true);
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       setUserRole(user.user_metadata.role);
-
-      const { data: publicUser, error: publicError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id);
-
-      if (publicError) throw publicError;
 
       let tasksData;
       if (user.user_metadata.role === "assistant") {
@@ -153,9 +130,17 @@ const Projects = () => {
         if (error) throw error;
         tasksData = data || [];
       }
-      setTasks(tasksData);
+      // Ensure all tasks have required fields with defaults
+      const normalizedTasks = tasksData.map(task => ({
+        ...task,
+        title: task.title || "Untitled",
+        task: task.task || "",
+        status: task.status || "inbox",
+        comments: task.comments || [],
+        attachments: task.attachments || ""
+      }));
+      setTasks(normalizedTasks);
 
-      // Fetch all comments for the tasks
       const taskIds = tasksData.map((task) => task.id);
       const { data: commentsData, error: commentsError } = await supabase
         .from("comments")
@@ -163,49 +148,42 @@ const Projects = () => {
         .in("task_id", taskIds);
       if (commentsError) throw commentsError;
       setComments(commentsData || []);
+
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, full_name");
+      if (usersError) throw usersError;
+      const usersMap = usersData.reduce((acc, user) => {
+        acc[user.id] = user.full_name;
+        return acc;
+      }, {});
+      setUsers(usersMap);
     } catch (error) {
-      console.error("Error fetching tasks or comments:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load tasks or comments",
-        variant: "destructive",
-      });
+      console.error("Error fetching data:", error);
+      toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getTasksByStatus = (status) =>
-    tasks.filter((task) => task.status === status);
-
-  const getCommentsByTaskId = (taskId) =>
-    comments.filter((comment) => comment.task_id === taskId);
+  const getTasksByStatus = (status) => tasks.filter((task) => task.status === status);
+  const getCommentsByTaskId = (taskId) => comments.filter((comment) => comment.task_id === taskId);
 
   const handleDrop = async (taskId, newStatus) => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tasks")
         .update({ status: newStatus })
         .eq("id", taskId);
-
       if (error) throw error;
 
       window.location.reload();
-
-      const columnTitle =
-        columns.find((col) => col.id === newStatus)?.title || newStatus;
-      toast({
-        title: "Project moved",
-        description: `Project moved to ${columnTitle}.`,
-      });
+      const columnTitle = columns.find((col) => col.id === newStatus)?.title || newStatus;
+      toast({ title: "Project moved", description: `Project moved to ${columnTitle}.` });
     } catch (error) {
       console.error("Error updating task status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to move project",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to move project", variant: "destructive" });
     } finally {
       setIsLoading(false);
       setDraggedTaskId(null);
@@ -214,23 +192,15 @@ const Projects = () => {
 
   const handleReorderTasks = async (draggedTaskId, targetIndex, status) => {
     if (!draggedTaskId) return;
-
     const statusTasks = [...getTasksByStatus(status)];
-    const draggedTaskIndex = statusTasks.findIndex(
-      (task) => task.id === draggedTaskId
-    );
-
+    const draggedTaskIndex = statusTasks.findIndex((task) => task.id === draggedTaskId);
     if (draggedTaskIndex === -1) return;
 
     const draggedTask = statusTasks[draggedTaskIndex];
     statusTasks.splice(draggedTaskIndex, 1);
     statusTasks.splice(targetIndex, 0, draggedTask);
 
-    const updatedTasks = statusTasks.map((task, index) => ({
-      ...task,
-      order: index,
-    }));
-
+    const updatedTasks = statusTasks.map((task, index) => ({ ...task, order: index }));
     try {
       setIsLoading(true);
       await Promise.all(
@@ -238,22 +208,14 @@ const Projects = () => {
           supabase.from("tasks").update({ order: task.order }).eq("id", task.id)
         )
       );
-
       setTasks((prev) => {
         const otherTasks = prev.filter((task) => task.status !== status);
-        return [...otherTasks, ...updatedTasks].sort(
-          (a, b) => (a.order || 0) - (b.order || 0)
-        );
+        return [...otherTasks, ...updatedTasks].sort((a, b) => (a.order || 0) - (b.order || 0));
       });
-
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error reordering tasks:", error);
-      toast({
-        title: "Error",
-        description: "Failed to reorder tasks",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to reorder tasks", variant: "destructive" });
     } finally {
       setIsLoading(false);
       setDraggedTaskId(null);
@@ -276,43 +238,30 @@ const Projects = () => {
   const handleSaveTask = async (updatedTask) => {
     try {
       setIsLoading(true);
-
       const { error } = await supabase
         .from("tasks")
         .update({
-          title: updatedTask.title,
-          task: updatedTask.task,
-          status: updatedTask.status,
+          title: updatedTask.title || "Untitled",
+          task: updatedTask.task || "",
+          status: updatedTask.status || "inbox",
           labels: updatedTask.labels || "",
           attachments: updatedTask.attachments || "",
           due_date: updatedTask.due_date,
-          purpose: updatedTask.purpose,
-          end_result: updatedTask.end_result,
+          purpose: updatedTask.purpose || "",
+          end_result: updatedTask.end_result || "",
         })
         .eq("id", updatedTask.id);
-
       if (error) throw error;
 
-      setTasks((prev) =>
-        prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-      );
-
+      setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
       if (selectedTask && selectedTask.id === updatedTask.id) {
         setSelectedTask(updatedTask);
       }
-
       setIsTaskDialogOpen(false);
-      toast({
-        title: "Project updated",
-        description: "Your project has been saved.",
-      });
+      toast({ title: "Project updated", description: "Your project has been saved." });
     } catch (error) {
       console.error("Error saving task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save project",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to save project", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -322,23 +271,15 @@ const Projects = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-
       if (error) throw error;
 
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
       setComments((prev) => prev.filter((comment) => comment.task_id !== taskId));
       setIsTaskDialogOpen(false);
-      toast({
-        title: "Project deleted",
-        description: "Project has been removed.",
-      });
+      toast({ title: "Project deleted", description: "Project has been removed." });
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete project",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to delete project", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -352,23 +293,17 @@ const Projects = () => {
   const handleCreateTask = async (newTask) => {
     try {
       setIsLoading(true);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       const { data: publicUser, error: publicUserError } = await supabase
         .from("users")
         .select("*")
         .eq("id", user.id);
-
       if (publicUserError) throw publicUserError;
 
       let taskToAdd;
-      if (user.user_metadata.role === "executive") {
+      if (publicUser[0].role === "executive") {
         taskToAdd = {
           title: newTask.title || "Untitled Project",
           task: newTask.task || "",
@@ -381,7 +316,7 @@ const Projects = () => {
           purpose: newTask.purpose || "",
           end_result: newTask.end_result || "",
         };
-      } else if (user.user_metadata.role === "assistant") {
+      } else if (publicUser[0].role === "assistant") {
         taskToAdd = {
           title: newTask.title || "Untitled Project",
           task: newTask.task || "",
@@ -396,26 +331,15 @@ const Projects = () => {
         };
       }
 
-      const { data, error } = await supabase
-        .from("tasks")
-        .insert([taskToAdd])
-        .select();
-
+      const { data, error } = await supabase.from("tasks").insert([taskToAdd]).select();
       if (error) throw error;
 
       setTasks((prev) => [...prev, data[0]]);
       setIsNewTaskDialogOpen(false);
-      toast({
-        title: "Project created",
-        description: "Your new project has been created.",
-      });
+      toast({ title: "Project created", description: "Your new project has been created." });
     } catch (error) {
       console.error("Error creating task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create project",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to create project", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -424,38 +348,23 @@ const Projects = () => {
   const handleAddComment = async (taskId, comment) => {
     try {
       setIsLoading(true);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       const newComment = {
         task_id: taskId,
         user_id: user.id,
-        content: comment.content,
+        content: comment.content || "",
       };
 
-      const { data, error } = await supabase
-        .from("comments")
-        .insert([newComment])
-        .select();
-
+      const { data, error } = await supabase.from("comments").insert([newComment]).select();
       if (error) throw error;
 
       setComments((prev) => [...prev, data[0]]);
-      toast({
-        title: "Comment added",
-        description: "Your comment has been added.",
-      });
+      toast({ title: "Comment added", description: "Your comment has been added." });
     } catch (error) {
       console.error("Error adding comment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add comment",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to add comment", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -464,12 +373,10 @@ const Projects = () => {
   const handleEditComment = async (taskId, commentId, updatedComment) => {
     try {
       setIsLoading(true);
-
       const { error } = await supabase
         .from("comments")
-        .update({ content: updatedComment.content, updated_at: new Date().toISOString() })
+        .update({ content: updatedComment.content || "", updated_at: new Date().toISOString() })
         .eq("id", commentId);
-
       if (error) throw error;
 
       setComments((prev) =>
@@ -477,17 +384,10 @@ const Projects = () => {
           comment.id === commentId ? { ...comment, ...updatedComment } : comment
         )
       );
-      toast({
-        title: "Comment updated",
-        description: "Your comment has been updated.",
-      });
+      toast({ title: "Comment updated", description: "Your comment has been updated." });
     } catch (error) {
       console.error("Error editing comment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to edit comment",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to edit comment", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -496,56 +396,32 @@ const Projects = () => {
   const handleDeleteComment = async (taskId, commentId) => {
     try {
       setIsLoading(true);
-
-      const { error } = await supabase
-        .from("comments")
-        .delete()
-        .eq("id", commentId);
-
+      const { error } = await supabase.from("comments").delete().eq("id", commentId);
       if (error) throw error;
 
-      setComments((prev) =>
-        prev.filter((comment) => comment.id !== commentId)
-      );
-      toast({
-        title: "Comment deleted",
-        description: "Your comment has been removed.",
-      });
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      toast({ title: "Comment deleted", description: "Your comment has been removed." });
     } catch (error) {
       console.error("Error deleting comment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete comment",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to delete comment", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEditColumnTitle = (id, newTitle) => {
-    toast({
-      title: "Column names are fixed",
-      description: "Column names cannot be changed.",
-    });
+    toast({ title: "Column names are fixed", description: "Column names cannot be changed." });
   };
 
   const getColumnIcon = (columnId) => {
     switch (columnId) {
-      case "inbox":
-        return <Inbox className="h-5 w-5" />;
-      case "confirmedreceived":
-        return <ClipboardList className="h-5 w-5" />;
-      case "inprogress":
-        return <Clock className="h-5 w-5" />;
-      case "waiting":
-        return <Timer className="h-5 w-5" />;
-      case "review":
-        return <FileText className="h-5 w-5" />;
-      case "archive":
-        return <Archive className="h-5 w-5" />;
-      default:
-        return <ListChecks className="h-5 w-5" />;
+      case "inbox": return <Inbox className="h-5 w-5" />;
+      case "confirmedreceived": return <ClipboardList className="h-5 w-5" />;
+      case "inprogress": return <Clock className="h-5 w-5" />;
+      case "waiting": return <Timer className="h-5 w-5" />;
+      case "review": return <FileText className="h-5 w-5" />;
+      case "archive": return <Archive className="h-5 w-5" />;
+      default: return <ListChecks className="h-5 w-5" />;
     }
   };
 
@@ -574,12 +450,7 @@ const Projects = () => {
         </div>
       </div>
 
-      <Tabs
-        defaultValue="kanban"
-        value={activeView}
-        onValueChange={setActiveView}
-        className="w-full mb-6"
-      >
+      <Tabs defaultValue="kanban" value={activeView} onValueChange={setActiveView} className="w-full mb-6">
         <TabsList className="grid w-[400px] grid-cols-2 mx-auto">
           <TabsTrigger value="kanban" className="flex items-center gap-2">
             <Kanban className="h-4 w-4" />
@@ -608,8 +479,7 @@ const Projects = () => {
               onAddTask: handleAddTask,
               onEditColumnTitle: handleEditColumnTitle,
               isEditing: editingColumnId === column.id,
-              setIsEditing: (isEditing) =>
-                setEditingColumnId(isEditing ? column.id : null),
+              setIsEditing: (isEditing) => setEditingColumnId(isEditing ? column.id : null),
             }))}
           />
         </TabsContent>
@@ -628,15 +498,13 @@ const Projects = () => {
         <TaskEditDialog
           isOpen={isTaskDialogOpen}
           task={{ ...selectedTask, comments: getCommentsByTaskId(selectedTask.id) }}
-          onClose={() => {
-            setIsTaskDialogOpen(false);
-            setSelectedTask(null);
-          }}
+          onClose={() => { setIsTaskDialogOpen(false); setSelectedTask(null); }}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}
           onAddComment={handleAddComment}
           onEditComment={handleEditComment}
           onDeleteComment={handleDeleteComment}
+          users={users}
         />
       )}
 
@@ -644,11 +512,8 @@ const Projects = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
-            <DialogDescription>
-              Fill in the details for your new project.
-            </DialogDescription>
+            <DialogDescription>Fill in the details for your new project.</DialogDescription>
           </DialogHeader>
-
           <TaskForm
             onSave={handleCreateTask}
             onCancel={() => setIsNewTaskDialogOpen(false)}

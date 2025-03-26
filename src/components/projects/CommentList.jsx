@@ -42,26 +42,26 @@ const CommentList = ({
           <Avatar className="h-8 w-8">
             <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.authorName}`} />
             <AvatarFallback className="text-xs">
-              {comment.authorName.split(' ').map(n => n[0]).join('')}
+              {/* {comment.authorName.split(' ').map(n => n[0]).join('')} */} User
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{comment.authorName}</p>
+              <p className="text-sm font-medium">User</p>
               <div className="flex items-center">
                 <p className="text-xs text-muted-foreground mr-2">
                   {new Date(comment.timestamp).toLocaleString()}
                 </p>
                 {editingCommentId !== comment.id && (
                   <div className="flex space-x-1">
-                    <Button 
+                    {/* <Button 
                       variant="ghost" 
                       size="sm" 
                       className="h-6 w-6 p-0" 
                       onClick={() => setEditingCommentId(comment.id)}
                     >
                       <Pencil className="h-3 w-3" />
-                    </Button>
+                    </Button> */}
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -83,7 +83,7 @@ const CommentList = ({
               />
             ) : (
               <>
-                <p className="mt-1 text-sm">{comment.text}</p>
+                <p className="mt-1 text-sm">{comment.content}</p>
                 
                 {comment.attachments && comment.attachments.length > 0 && (
                   <div className="mt-2 space-y-1">
