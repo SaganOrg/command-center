@@ -105,9 +105,12 @@ const Library = () => {
       }
       if (user) {
         console.log(user);
-        setUserRole(user.user_metadata.role || null);
-        if (user.user_metadata.role === "assistant") {
-          setUserId(user.user_metadata.owner_id || null);
+        const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+        if (publicError) throw publicError;
+
+        setUserRole(publicUser[0].role || null);
+        if ( publicUser[0].role === "assistant") {
+          setUserId(publicUser[0].executive_id || null);
         } else {
           setUserId(user.id || null); // For executives, use their own ID
         }

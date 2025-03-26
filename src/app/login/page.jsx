@@ -78,7 +78,7 @@ const Login = () => {
     if (role === "executive") {
       navigate.push("/voice"); // Adjust route as needed
     } else if (role === "assistant") {
-      navigate.push("/voice"); // Adjust route as needed
+      navigate.push("/projects"); // Adjust route as needed
     } else {
       navigate.push("/"); // Default route if role isn't set
     }
