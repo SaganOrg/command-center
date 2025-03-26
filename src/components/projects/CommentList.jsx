@@ -40,17 +40,17 @@ const CommentList = ({
       {comments.map((comment) => (
         <div key={comment.id} className="flex space-x-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.authorName}`} />
+            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.author_name}`} />
             <AvatarFallback className="text-xs">
-              {/* {comment.authorName.split(' ').map(n => n[0]).join('')} */} User
+              {comment.author_name}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">User</p>
+              <p className="text-sm font-medium">{comment.author_name}</p>
               <div className="flex items-center">
                 <p className="text-xs text-muted-foreground mr-2">
-                  {new Date(comment.timestamp).toLocaleString()}
+                  {new Date(comment.created_at).toLocaleString()}
                 </p>
                 {editingCommentId !== comment.id && (
                   <div className="flex space-x-1">

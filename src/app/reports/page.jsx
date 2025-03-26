@@ -62,6 +62,11 @@ const Reports = () => {
     fetchUserRole();
   }, [toast]);
 
+  const handleReportSubmitted = async () => {
+    console.log('Report submitted or updated!');
+    // Add your logic here, e.g., refresh data, show a message, etc.
+  };
+
   return (
    
       <AnimatedTransition>

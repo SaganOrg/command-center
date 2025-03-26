@@ -18,9 +18,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-
 const ReportForm = ({ onReportSubmitted }) => {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const sanitizeBusynessLevel = (value) => {
+    const parsed = parseInt(value);
+    return isNaN(parsed) ? '5' : parsed.toString();
+  };
+
   const [formData, setFormData] = useState({
     date: today,
     completedTasks: '',
@@ -31,7 +35,7 @@ const ReportForm = ({ onReportSubmitted }) => {
   });
   const [loading, setLoading] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('form'); // Default to form, updated later
   const [reportExists, setReportExists] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,7 +58,14 @@ const ReportForm = ({ onReportSubmitted }) => {
       }
       if (user) {
         setUserId(user.id);
-        const ownerId = user.user_metadata?.owner_id;
+        const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+        if (publicError) {
+          console.error('Error fetching user:', error);
+        toast.error('Failed to authenticate user. Please log in again.', { duration: 3000 });
+        return;
+        } 
+
+        const ownerId = publicUser[0].executive_id;
         setExecutiveId(ownerId || null);
 
         // Check if a report exists for today
@@ -77,7 +88,7 @@ const ReportForm = ({ onReportSubmitted }) => {
             outstandingTasks: reportData.outstanding_task || '',
             needFromManager: reportData.need_from_manager || '',
             tomorrowPlans: reportData.tomorrows_plan || '',
-            busynessLevel: reportData.business_level?.toString() || '5'
+            busynessLevel: sanitizeBusynessLevel(reportData.business_level)
           });
         }
       } else {
@@ -133,7 +144,7 @@ const ReportForm = ({ onReportSubmitted }) => {
               outstandingTasks: existingReport.outstanding_task || '',
               needFromManager: existingReport.need_from_manager || '',
               tomorrowPlans: existingReport.tomorrows_plan || '',
-              busynessLevel: existingReport.business_level?.toString() || '5'
+              busynessLevel: sanitizeBusynessLevel(existingReport.business_level)
             });
           } else {
             setViewMode('form'); // Form mode if no report
@@ -241,7 +252,7 @@ const ReportForm = ({ onReportSubmitted }) => {
           outstandingTasks: data.outstanding_task,
           needFromManager: data.need_from_manager,
           tomorrowPlans: data.tomorrows_plan,
-          busynessLevel: data.business_level.toString()
+          busynessLevel: sanitizeBusynessLevel(data.business_level)
         });
         onReportSubmitted?.(); // Notify parent
       }
@@ -276,7 +287,7 @@ const ReportForm = ({ onReportSubmitted }) => {
           outstandingTasks: data.outstanding_task,
           needFromManager: data.need_from_manager,
           tomorrowPlans: data.tomorrows_plan,
-          busynessLevel: data.business_level.toString()
+          busynessLevel: sanitizeBusynessLevel(data.business_level)
         });
         setReportDates(prev => new Set(prev).add(currentDate));
         onReportSubmitted?.(); // Notify parent
@@ -520,8 +531,8 @@ const ReportForm = ({ onReportSubmitted }) => {
               <div className="space-y-2">
                 <Label>Busyness Level: {formData.busynessLevel}</Label>
                 <Slider
-                  defaultValue={[parseInt(formData.busynessLevel)]}
-                  value={[parseInt(formData.busynessLevel)]}
+                  defaultValue={[5]}
+                  value={[parseInt(formData.busynessLevel) || 5]}
                   onValueChange={handleSliderChange}
                   max={10}
                   min={1}

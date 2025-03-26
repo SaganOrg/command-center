@@ -57,8 +57,13 @@ const ReportHistory= () => {
         console.error('Error fetching user:', error);
         toast.error('Failed to authenticate user. Please log in again.', { duration: 3000 });
       } else if (user) {
-        setUserId(user.id);
-        const ownerId = user.user_metadata?.owner_id;
+        const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+        if (publicError) {
+          console.error('Error fetching user:', error);
+        toast.error('Failed to authenticate user. Please log in again.', { duration: 3000 });
+        }
+        if (publicUser) {
+          const ownerId = publicUser[0].executive_id;
         if (ownerId) {
           setExecutiveId(ownerId);
         } else {
@@ -66,6 +71,9 @@ const ReportHistory= () => {
           toast.warning('No executive ID found. Only your own reports will be shown.', { duration: 3000 });
           setExecutiveId(null);
         }
+        }
+        setUserId(user.id);
+        
       } else {
         toast.error('No authenticated user found. Please log in.', { duration: 3000 });
       }

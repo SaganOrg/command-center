@@ -351,10 +351,15 @@ const Projects = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
+      const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+      if (publicError) throw publicError;
+
+
       const newComment = {
         task_id: taskId,
         user_id: user.id,
         content: comment.content || "",
+        author_name:publicUser[0].full_name || publicUser[0].role,
       };
 
       const { data, error } = await supabase.from("comments").insert([newComment]).select();
