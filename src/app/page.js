@@ -5,7 +5,11 @@ import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import Hero from "../components/Hero";
 import AnimatedTransition from "../components/AnimatedTransition";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 import { useRouter } from "next/navigation";
 
 const features = [
@@ -40,6 +44,11 @@ const features = [
 ];
 
 export default function Home() {
+  
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn("Supabase credentials missing. Auth features will be disabled.");
+  
+} const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const router = useRouter();
   const [loading, setLoading] = useState(true); // Track loading state
 
@@ -138,7 +147,7 @@ export default function Home() {
     };
 
     handleAuth();
-  }, []); // Depend on router to retrigger on navigation
+  }, [router]); // Depend on router to retrigger on navigation
 
   if (loading) {
     return <div>Loading...</div>; // Show loading state while checking auth
