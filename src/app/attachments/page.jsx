@@ -1772,6 +1772,7 @@ const Library = () => {
                                               <a
                                                 href={attachment.url}
                                                 download={attachment.name}
+                                                target="_blank"
                                               >
                                                 <Download className="h-4 w-4 mr-1" />{" "}
                                                 Download
