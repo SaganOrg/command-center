@@ -103,6 +103,7 @@ const Projects = () => {
         } else {
           setUserId(user.id || null);
         }
+        fetchTasksCommentsAndUsers();
       } else {
         toast({
           variant: "destructive",
@@ -113,11 +114,8 @@ const Projects = () => {
       }
     };
     fetchUserRole();
-  }, [toast, router,supabase]);
-
-  useEffect(() => {
-    fetchTasksCommentsAndUsers();
   }, []);
+
 
   useEffect(() => {
     const handleGlobalDragStart = (e) => {
