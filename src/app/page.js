@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import Hero from "../components/Hero";
@@ -41,75 +41,108 @@ const features = [
 
 export default function Home() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true); // Track loading state
 
-  // Listen for auth state changes
+  // Check initial session and listen for auth changes
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth event:", event, "Session:", session);
+    const handleAuth = async () => {
+      // Check current session on mount
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-        if (session?.user) {
-          // User has signed in; update the users table
-          const {
-            data,
-            error,
-          } = await supabase
-            .from("users")
-            .select("*")
-              .eq("id", session.user.id);
-          
-          console.log(data, "laksjdflkjasdf")
+      console.log("Initial session:", session);
 
-          if (error) {
-            await supabase.auth.signOut();
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        router.push("/login");
+        return;
+      }
+
+      if (session?.user) {
+        await handleUser(session.user);
+      } else {
+        console.log("No session found, waiting for auth event...");
+      }
+
+      // Set up auth state change listener
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log("Auth event:", event, "Session:", session);
+
+          if (event === "SIGNED_IN" && session?.user) {
+            await handleUser(session.user);
+          } else if (event === "SIGNED_OUT") {
             router.push("/login");
           }
-
-          if (data.length>0) {
-            if (data[0].role === "executive") {
-              if (data[0].assistant_id === null) {
-                router.push("/settings");
-              } else {
-                router.push("/voice");
-              }
-            } else {
-              router.push("/projects");
-            }
-          } else {
-            const { error: insertError } = await supabase.from("users").insert({
-              id: session?.user.id, // Use the Supabase auth user ID
-              email: session?.user.email,
-              full_name: session?.user.user_metadata?.full_name || session?.user.email.split("@")[0],
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              role: "executive",
-            });
-    
-            if (insertError) {
-              console.error("Error inserting user into users table:", insertError);
-            } else {
-              router.push("/settings");
-              console.log("User added to users table:", user.id);
-            }
-          }
         }
-        
-      }
-    );
+      );
 
-    // // Check if the user is already signed in on page load
-    // const checkUser = async () => {
-    //   const { data: { user } } = await supabase.auth.getUser();
-    //   if (user) {
-    //     await updateUserInTable(user);
-    //   }
-    // };
+      setLoading(false);
 
-    // Cleanup the listener on component unmount
-    return () => {
-      authListener.subscription.unsubscribe();
+      // Cleanup listener on unmount
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
     };
-  }, []);
+
+    // Handle user logic (check or insert user, then redirect)
+    const handleUser = async (user) => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id);
+
+      console.log("User query result:", data);
+
+      if (error) {
+        console.error("Error fetching user:", error);
+        await supabase.auth.signOut();
+        router.push("/login");
+        return;
+      }
+
+      if (data.length > 0) {
+        const userData = data[0];
+        if (userData.role === "executive") {
+          if (userData.assistant_id === null) {
+            router.push("/settings");
+          } else {
+            router.push("/voice");
+          }
+        } else {
+          router.push("/projects");
+        }
+      } else {
+        // Insert new user
+        const { error: insertError } = await supabase.from("users").insert({
+          id: user.id,
+          email: user.email,
+          full_name:
+            user.user_metadata?.full_name || user.email.split("@")[0],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          role: "executive",
+        });
+
+        if (insertError) {
+          console.error("Error inserting user:", insertError);
+          await supabase.auth.signOut();
+          router.push("/login");
+        } else {
+          console.log("User inserted:", user.id);
+          router.push("/settings");
+        }
+      }
+    };
+
+    handleAuth();
+  }, [router]); // Depend on router to retrigger on navigation
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading state while checking auth
+  }
 
   return (
     <div>
