@@ -84,7 +84,7 @@ const Voice = () => {
       }
     };
     fetchUserRole();
-  }, [toast]);
+  }, [supabase]);
 
   const startRecording = async () => {
     if (userRole.role !== "executive") {
@@ -273,53 +273,7 @@ const Voice = () => {
             "Your voice note has been transcribed and added to your tasks!",
         });
       }
-      
-      // else {
-      //   const { data: publicUser, error: publicError } = await supabase
-      //     .from("users")
-      //     .select("*")
-      //     .eq("id", user.id);
-
-      //   if (publicError) throw publicError;
-
-      //   console.log(publicUser[0].assistant_id);
-
-      //   if (publicUser[0].assistant_id) {
-      //     const { error } = await supabase.from("tasks").insert({
-      //       title: generatedTitle,
-      //       task: transcribedText,
-      //       created_at: new Date().toISOString(),
-      //       created_by: user.id,
-      //       assigned_to: publicUser[0].assistant_id,
-      //       status: "inbox",
-      //     });
-
-      //     if (error) throw error;
-
-      //     toast({
-      //       title: "Task Added",
-      //       description:
-      //         "Your voice note has been transcribed and added to your tasks!",
-      //     });
-      //   } else {
-      //     const { error } = await supabase.from("tasks").insert({
-      //       title: generatedTitle,
-      //       task: transcribedText,
-      //       created_at: new Date().toISOString(),
-      //       created_by: user.id,
-      //       // assigned_to:publicUser[0].assistant_id,
-      //       status: "inbox",
-      //     });
-
-      //     if (error) throw error;
-
-      //     toast({
-      //       title: "Task Added",
-      //       description:
-      //         "Your voice note has been transcribed and added to your tasks!",
-      //     });
-      //   }
-      // }
+    
 
       setTranscription(null);
       setRecordingStatus("idle");
@@ -388,7 +342,7 @@ const Voice = () => {
             } text-white mb-4`}
             onClick={toggleRecording}
             disabled={
-              isTranscribing || userRole === null || userRole === "assistant"
+              isTranscribing || userRole === null
             } // Disable for assistants
           >
             {isRecording ? (

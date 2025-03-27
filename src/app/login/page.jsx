@@ -200,7 +200,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://sagan-command-center.vercel.app/",
+        redirectTo: "https://sagan-command-center.vercel.app/"
       },
     });
     if (error) {

@@ -98,7 +98,7 @@ const Navbar = () => {
           
           
           if (publicError) throw publicError;
-          setLoggedInUser(publicUser[0]);
+          setLoggedInUser(publicUser[0].role);
         }
   
         // Set up auth listener
@@ -115,7 +115,7 @@ const Navbar = () => {
               console.log(publicUser)
               
               if (publicError) throw publicError;
-              setLoggedInUser(publicUser[0]);
+              setLoggedInUser(publicUser[0].role);
             }
           }
         );
@@ -131,7 +131,7 @@ const Navbar = () => {
   
     // Execute the async function
     handleAuth();
-  }, [supabase]); // Added supabase as dependency since it's used in the effect
+  }, [navigate]); // Added supabase as dependency since it's used in the effect
 
   const handleLogout = (async () => {
     if (!supabase) {
@@ -159,7 +159,7 @@ const Navbar = () => {
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
             {/* Private menu items (visible only when logged in) */}
-            {isLoggedIn && loggedInUser.role==="executive" &&
+            {isLoggedIn && loggedInUser==="executive" &&
               privateMenuItems.map((item) => (
                 <Button
                   key={item.href}
@@ -178,7 +178,7 @@ const Navbar = () => {
                   </Link>
                 </Button>
               ))}
-              {isLoggedIn && loggedInUser.role==="assistant" &&
+              {isLoggedIn && loggedInUser==="assistant" &&
               privateAssistantMenuItems.map((item) => (
                 <Button
                   key={item.href}
