@@ -90,7 +90,7 @@ const Voice = () => {
       }
     };
     fetchUserRole();
-  }, [router, supabase]);
+  }, []);
 
   const startRecording = async () => {
     if (userRole.role !== "executive") {
