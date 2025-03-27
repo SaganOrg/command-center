@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import OpenAI from "openai";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 // Initialize OpenAI client with environment variable safely
@@ -32,6 +32,12 @@ const openai = (() => {
 })();
 
 const Voice = () => {
+
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const [isRecording, setIsRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("idle");
   const [transcription, setTranscription] = useState(null);

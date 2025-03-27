@@ -34,9 +34,10 @@ import { useRouter } from "next/navigation";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
 const Projects = () => {
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [users, setUsers] = useState({});

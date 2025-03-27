@@ -69,12 +69,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {supabase} from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 
 const Library = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("Supabase credentials missing. Auth features will be disabled.");
+  }
+  
+ const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const { toast } = useToast();
