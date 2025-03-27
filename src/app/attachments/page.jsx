@@ -119,7 +119,7 @@ const Library = () => {
       }
     };
     fetchUserRole();
-  }, [toast]);
+  }, [toast, router]);
 
   const [referenceItems, setReferenceItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -447,7 +447,7 @@ const Library = () => {
       fetchReferenceItems();
       fetchTags();
     }
-  }, [userId, userRole]);
+  }, [userId, userRole, router]);
 
   const filteredItems = referenceItems.filter((item) => {
     const matchesSearch =
@@ -608,6 +608,36 @@ const Library = () => {
   };
 
   const onSubmit = async (data) => {
+    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) {
+      console.error("Error fetching user:", error);
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Could not verify user. Please log in again.",
+      });
+      router.push("/login");
+      return;
+    }
+    if (user) {
+      console.log(user);
+      const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+      if (publicError) throw publicError;
+      if (publicUser[0].role === "executive" && publicUser[0].assistant_id === null) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Assistant not found. Redirecting to settings page ...",
+        });
+        router.push("/settings");
+        return
+      }
+    }
+
     try {
       if (data.newTag && !data.tags.includes(data.newTag)) {
         data.tags.push(data.newTag);

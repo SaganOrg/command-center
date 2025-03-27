@@ -204,7 +204,7 @@ const ReportHistory= () => {
         </motion.div>
         <motion.h3 variants={itemVariants} className="text-xl font-medium mb-2">No Reports Found</motion.h3>
         <motion.p variants={itemVariants} className="text-muted-foreground">
-          You haven't submitted any reports yet. Create your first report to see it here.
+          Your assistant haven't submitted any reports yet. Create your first report to see it here.
         </motion.p>
       </motion.div>
     );

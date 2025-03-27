@@ -46,6 +46,25 @@ const privateMenuItems = [
   },
 ];
 
+const privateAssistantMenuItems =  [
+
+  {
+    href: "/projects",
+    icon: <ListChecks className="h-4 w-4 mr-1" />,
+    label: "Project Board",
+  },
+  {
+    href: "/reports",
+    icon: <ClipboardList className="h-4 w-4 mr-1" />,
+    label: "Reports",
+  },
+  {
+    href: "/attachments",
+    icon: <BookOpen className="h-4 w-4 mr-1" />,
+    label: "Reference",
+  }
+];
+
 const Navbar = () => {
   const location = usePathname();
   const navigate = useRouter();
@@ -57,33 +76,62 @@ const Navbar = () => {
 
   // Check authentication state on mount and listen for changes if Supabase is available
   useEffect(() => {
-    if (!supabase) {
-      setIsLoggedIn(false);
-      return;
-    }
-  
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session);
-      if (session) {
-        setLoggedInUser(session.user.user_metadata);
-      }
-    });
-  
-    // Set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setIsLoggedIn(!!session);
-        if (session) {
-          setLoggedInUser(session.user.user_metadata);
+    // Define async function
+    const handleAuth = async () => {
+      try {
+        if (!supabase) {
+          setIsLoggedIn(false);
+          return;
         }
-      }
-    );
   
-    return () => {
-      authListener?.subscription.unsubscribe();
+        // Check initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session);
+        
+        if (session) {
+          const { data: publicUser, error: publicError } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", session.user.id);
+          
+            console.log(publicUser)
+          
+          
+          if (publicError) throw publicError;
+          setLoggedInUser(publicUser[0]);
+        }
+  
+        // Set up auth listener
+        const { data: authListener } = await supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            setIsLoggedIn(!!session);
+            
+            if (session) {
+              const { data: publicUser, error: publicError } = await supabase
+                .from("users")
+                .select("*")
+                .eq("id", session.user.id);
+              
+              console.log(publicUser)
+              
+              if (publicError) throw publicError;
+              setLoggedInUser(publicUser[0]);
+            }
+          }
+        );
+  
+        // Cleanup
+        return () => {
+          authListener?.subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Auth handling error:", error);
+      }
     };
-  }, []);
+  
+    // Execute the async function
+    handleAuth();
+  }, [supabase]); // Added supabase as dependency since it's used in the effect
 
   const handleLogout = (async () => {
     if (!supabase) {
@@ -111,8 +159,27 @@ const Navbar = () => {
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
             {/* Private menu items (visible only when logged in) */}
-            {isLoggedIn &&
+            {isLoggedIn && loggedInUser.role==="executive" &&
               privateMenuItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex items-center",
+                    location.pathname === item.href &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                  asChild
+                >
+                  <Link href={item.href}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                </Button>
+              ))}
+              {isLoggedIn && loggedInUser.role==="assistant" &&
+              privateAssistantMenuItems.map((item) => (
                 <Button
                   key={item.href}
                   variant="ghost"
