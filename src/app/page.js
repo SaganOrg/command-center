@@ -138,7 +138,7 @@ export default function Home() {
     };
 
     handleAuth();
-  }, [router]); // Depend on router to retrigger on navigation
+  }, []); // Depend on router to retrigger on navigation
 
   if (loading) {
     return <div>Loading...</div>; // Show loading state while checking auth
