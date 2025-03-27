@@ -53,6 +53,8 @@ const TaskCard = ({
     onClick();
   };
 
+ 
+
   return (
     <Card
       className={`mb-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-1 border-l-4 ${getColor()} ${isDragging ? "opacity-50" : ""} ${className}`}
@@ -66,7 +68,7 @@ const TaskCard = ({
         <CardTitle className="text-lg font-medium">{task.title || "Untitled"}</CardTitle>
         <CardDescription className="mt-2 line-clamp-3">{task.task || "No description"}</CardDescription>
       </CardHeader>
-      {/* <CardContent className="pb-3 pt-0">
+      <CardContent className="pb-3 pt-0">
         {task.due_date && (
           <div className="flex items-center text-sm text-muted-foreground mt-2">
             <CalendarDays className="mr-2 h-4 w-4" />
@@ -75,21 +77,13 @@ const TaskCard = ({
         )}
         {(task.comments && task.comments.length > 0) && (
           <div className="flex items-center mt-2 space-x-4">
-            {task.attachments && (
-              <div className="flex items-center text-xs text-muted-foreground">
-                <PaperclipIcon className="mr-1 h-3 w-3" />
-                
-              </div>
-            )}
-            {task.comments && task.comments.length > 0 && (
               <div className="flex items-center text-xs text-muted-foreground">
                 <MessageSquare className="mr-1 h-3 w-3" />
-                <span>{task.comments.length}</span>
+                <span>Comments: {task.comments.length}</span>
               </div>
-            )}
           </div>
         )}
-      </CardContent> */}
+      </CardContent>
     </Card>
   );
 };

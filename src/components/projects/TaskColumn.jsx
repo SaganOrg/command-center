@@ -27,6 +27,7 @@ const TaskColumn = ({
   isEditing = false,
   setIsEditing,
 }) => {
+  
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dropPreviewIndex, setDropPreviewIndex] = useState(null);
   const [editedTitle, setEditedTitle] = useState(title);

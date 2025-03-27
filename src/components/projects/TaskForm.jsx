@@ -11,6 +11,17 @@ import { cn } from '@/lib/utils';
 import { FileText, Target, Flag, CalendarDays, X, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const TaskForm = ({ 
   task, 
@@ -76,9 +87,8 @@ const TaskForm = ({
       taskToSave.comments = task.comments;
     }
     
-    console.log("Saving task from TaskForm:", taskToSave); // Debug log
+    console.log("Saving task from TaskForm:", taskToSave);
     onSave(taskToSave);
-    // Do NOT call onCancel here; let TaskEditDialog decide when to close
   };
 
   return (
@@ -123,8 +133,8 @@ const TaskForm = ({
               <span>Status</span>
             </div>
             <Select 
-              value={newTask.status} // Use value instead of defaultValue to reflect state
-              onValueChange={(value) => handleChange('status', value)} // Fix: Pass the new value
+              value={newTask.status}
+              onValueChange={(value) => handleChange('status', value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select status" />
@@ -333,26 +343,51 @@ const TaskForm = ({
       
       <div className="flex justify-between gap-2 pt-6 mt-6 border-t">
         <div>
-          {task && <Button variant="destructive" onClick={handleDelete} size="sm">
-          <X className="h-4 w-4 mr-1" />
-          Delete task
-        </Button>}
-        
+          {task && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <X className="h-4 w-4 mr-1" />
+                  Delete task
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete the task "{newTask.title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
-      <div className='flex gap-2'><Button variant="outline" onClick={onCancel} size="sm">
-          <X className="h-4 w-4 mr-1" />
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleSubmit} 
-          size="sm" 
-          className="bg-[#2D3B22] hover:bg-[#3c4f2d] text-white"
-          disabled={!newTask.title?.trim()}
-        >
-          <Check className="h-4 w-4 mr-1" />
-          {task ? 'Save Changes' : 'Create Project'}
-        </Button></div>
-        
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel} size="sm">
+            <X className="h-4 w-4 mr-1" />
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            size="sm" 
+            className="bg-[#2D3B22] hover:bg-[#3c4f2d] text-white"
+            disabled={!newTask.title?.trim()}
+          >
+            <Check className="h-4 w-4 mr-1" />
+            {task ? 'Save Changes' : 'Create Project'}
+          </Button>
+        </div>
       </div>
     </Card>
   );
