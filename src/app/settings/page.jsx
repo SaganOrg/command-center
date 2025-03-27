@@ -75,7 +75,7 @@ const Settings = () => {
       }
     };
     fetchUserRole();
-  }, [toast]);
+  }, [router, supabase]);
 
   // Function to send email via Brevo REST API
   const sendInviteEmail = async (recipientEmail) => {

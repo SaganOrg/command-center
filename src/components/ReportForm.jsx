@@ -18,7 +18,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const ReportForm = ({ onReportSubmitted }) => {
+const ReportForm = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
   const sanitizeBusynessLevel = (value) => {
     const parsed = parseInt(value);

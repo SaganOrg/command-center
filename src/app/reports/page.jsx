@@ -60,12 +60,8 @@ const Reports = () => {
       }
     };
     fetchUserRole();
-  }, [toast]);
+  }, [supabase, router]);
 
-  const handleReportSubmitted = async () => {
-    console.log('Report submitted or updated!');
-    // Add your logic here, e.g., refresh data, show a message, etc.
-  };
 
   return (
    
@@ -99,12 +95,6 @@ const Reports = () => {
               <>
                 {userRole === "assistant" && (
                   <ReportForm
-                    onReportSubmitted={async () => {
-                      const {
-                        data: { user },
-                      } = await supabase.auth.getUser();
-                      if (user) await handleReportSubmitted(user.id);
-                    }}
                   />
                 )}
                 {userRole === "executive" && <ReportHistory />}{" "}

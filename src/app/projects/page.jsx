@@ -112,7 +112,7 @@ const Projects = () => {
       }
     };
     fetchUserRole();
-  }, [toast, router]);
+  }, [toast, router,supabase]);
 
   useEffect(() => {
     fetchTasksCommentsAndUsers();
