@@ -96,7 +96,7 @@ const ReportForm = () => {
       }
     };
     fetchUserAndReport();
-  }, [today]);
+  }, [supabase]);
 
   // Fetch all report dates for the user
   useEffect(() => {
@@ -254,7 +254,6 @@ const ReportForm = () => {
           tomorrowPlans: data.tomorrows_plan,
           busynessLevel: sanitizeBusynessLevel(data.business_level)
         });
-        onReportSubmitted?.(); // Notify parent
       }
     } else {
       // Insert new report
@@ -290,7 +289,6 @@ const ReportForm = () => {
           busynessLevel: sanitizeBusynessLevel(data.business_level)
         });
         setReportDates(prev => new Set(prev).add(currentDate));
-        onReportSubmitted?.(); // Notify parent
       }
     }
     
