@@ -84,7 +84,7 @@ const Voice = () => {
       }
     };
     fetchUserRole();
-  }, [supabase]);
+  }, [router, supabase]);
 
   const startRecording = async () => {
     if (userRole.role !== "executive") {
