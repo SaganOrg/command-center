@@ -72,9 +72,18 @@ const Projects = () => {
         return;
       }
       if (user) {
-        setUserRole(user.user_metadata.role || null);
-        if (user.user_metadata.role === "assistant") {
-          setUserId(user.user_metadata.owner_id || null);
+        const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+        if (publicError) {
+          console.error("Error fetching user:", publicError);
+          toast({ variant: "destructive", title: "Authentication Error", description: "Could not verify user. Please log in again." });
+          router.push("/login");
+          return;
+        }
+
+
+        setUserRole(publicUser[0].role || null);
+        if (publicUser[0].role === "assistant") {
+          setUserId(publicUser[0].executive_id || null);
         } else {
           setUserId(user.id || null);
         }

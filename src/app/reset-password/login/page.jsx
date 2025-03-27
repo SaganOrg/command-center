@@ -45,7 +45,7 @@ const UpdatePassword = () => {
       if (error) throw error;
 
       setSuccessMessage("Password updated successfully! Redirecting to projects...");
-      setTimeout(() => navigate.push("/projects"), 2000); // Redirect after 2s
+      setTimeout(() => navigate.push("/projects"), 1000); // Redirect after 2s
     } catch (error) {
       setAuthError(error.message || "Failed to update password. Please try again.");
       const { error:signoutError } = await supabase.auth.signOut();

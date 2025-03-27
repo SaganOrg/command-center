@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPlus, Mail } from "lucide-react";
+import { UserPlus, Mail, User, MailIcon, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ const Settings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [userRole, setUserRole] = useState("");
+  const [assistant, setAssistant] = useState(null);
 
   const router = useRouter();
 
@@ -57,6 +58,12 @@ const Settings = () => {
                   });
                 } if (data[0].role) {
                   setUserRole(data[0].role || null);
+                  if (data[0].assistant_id) {
+                    const { data: assistantData, error: assistantError } = await supabase.from("users").select("*").eq("id", data[0].assistant_id);
+                    if (assistantError) throw assistantError;
+                    setAssistant(assistantData[0]);
+                  }
+                  
                 }
       } else {
         toast({
@@ -129,7 +136,7 @@ const Settings = () => {
       return;
     } else {
       const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
-      const signupLink = `https://sagan-command-center.vercel.app/assistant-signup/${user.id}`; // Replace with your actual signup URL
+      const signupLink = `https://sagan-command-center.vercel.app/assistant-signup/${user.id}/${recipientEmail}`; // Replace with your actual signup URL
 
       const emailData = {
         sender: {
@@ -214,7 +221,47 @@ const Settings = () => {
       </div>
       {userRole === "executive" && (
         <div className="grid gap-8">
-          <Card>
+      <Card>
+        {assistant ? (
+          // Assistant Profile Card
+          <>
+            <CardHeader>
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-5 w-5 text-primary" />
+                <CardTitle>Your Assistant</CardTitle>
+              </div>
+              <CardDescription>
+                Details of your assigned assistant
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium">{assistant.full_name || "Assistant"}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MailIcon className="h-4 w-4" />
+                    <span>{assistant.email}</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  // onClick={handleChangeAssistant}
+                >
+                  <Edit className="h-4 w-4" />
+                  Change Assistant
+                </Button>
+              </div>
+            </CardContent>
+          </>
+        ) : (
+          // Invite Form (No Assistant)
+          <>
             <CardHeader>
               <div className="flex items-center gap-2 mb-2">
                 <UserPlus className="h-5 w-5 text-primary" />
@@ -246,14 +293,15 @@ const Settings = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    The invited user will receive an email with instructions to
-                    join your account.
+                    The invited user will receive an email with instructions to join your account.
                   </p>
                 </div>
               </form>
             </CardContent>
-          </Card>
-        </div>
+          </>
+        )}
+      </Card>
+    </div>
       )}
     </motion.div>
   );

@@ -1,10 +1,9 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
-
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -55,32 +54,32 @@ const Login = () => {
       password: loginPassword,
     });
 
-    console.log(data)
-
-    const { data: userData , error: userError } = await supabase.from("users").select("*").eq("id", data.user.id);
-
-    if (userError) {
-      setAuthError(error.message || "Login failed. Please try again.");
-      setIsLoading(false);
-      return;
-    }
-
+    console.log(data);
     if (error) {
       setAuthError(error.message || "Login failed. Please try again.");
       setIsLoading(false);
       return;
     }
 
-    
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", data.user.id);
 
-    console.log("Logged in user:", userData);
+    if (userError) {
+      setAuthError(error.message || "Login failed. Please try again.");
+      setIsLoading(false);
+      return;
+    }
     const role = userData[0].role;
     if (role === "executive") {
-      navigate.push("/voice"); // Adjust route as needed
+      if (userData[0].assistant_id===null) {
+        navigate.push("/settings");
+        return;
+      }
+      navigate.push("/voice"); 
     } else if (role === "assistant") {
-      navigate.push("/projects"); // Adjust route as needed
-    } else {
-      navigate.push("/"); // Default route if role isn't set
+      navigate.push("/projects"); 
     }
     setIsLoading(false);
   };
@@ -114,29 +113,22 @@ const Login = () => {
     const { data, error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
-      // options: {
-      //   data: {
-      //     role: "executive", // Signup from this page is for employees
-      //   },
-      // },
     });
 
     if (data.user) {
-      const userId = data.user.id; // The ID of the newly signed-up assistant
-
+      const userId = data.user.id;
       const { error: updateError } = await supabase
         .from("users")
-        .insert({ id: userId, email: data.user.email, role:"executive", full_name:signupName })
+        .insert({
+          id: userId,
+          email: data.user.email,
+          role: "executive",
+          full_name: signupName,
+        })
         .select();
 
       if (updateError) {
-        console.error(
-          "Error updating assistant_id in users table:",
-          updateError
-        );
-        setAuthError(
-          "Please try again later"
-        );
+        setAuthError("Please try again later");
         setIsLoading(false);
         return;
       }
@@ -147,9 +139,7 @@ const Login = () => {
       setIsLoading(false);
       return;
     }
-
-    console.log("Signed up employee:", data.user);
-    setAuthError("Signup success as an executive");
+    // setAuthError("Signup success as an executive");
     setIsLoading(false);
     navigate.push("/");
   };
@@ -167,8 +157,7 @@ const Login = () => {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      // redirectTo: 'http://localhost:3000/reset-password', // Adjust this URL
-      redirectTo:'https://sagan-command-center.vercel.app/reset-password'
+      redirectTo: "https://sagan-command-center.vercel.app/reset-password",
     });
 
     if (error) {
@@ -208,28 +197,23 @@ const Login = () => {
     setIsLoading(true);
     setAuthError(null);
 
-    
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://sagan-command-center.vercel.app/", // Adjust redirect URL
+        redirectTo: "https://sagan-command-center.vercel.app/",
       },
-      
     });
-console.log("alksdjfl alskjdf lgoogle data....",data)
     if (error) {
       setAuthError(error.message || "Google signup failed.");
       setIsLoading(false);
       return;
     }
-    // Redirect happens automatically; handle success in Step 3
   };
 
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "90vh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -239,7 +223,7 @@ console.log("alksdjfl alskjdf lgoogle data....",data)
       }}
     >
       <div style={{ width: "100%", maxWidth: "400px" }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div style={{ textAlign: "center", }}>
           <div
             style={{
               display: "flex",
@@ -381,125 +365,125 @@ console.log("alksdjfl alskjdf lgoogle data....",data)
                 </button>
               </form>
             ) : isLogin ? (
-                <>
-              <form
-                onSubmit={handleLoginSubmit}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Email
-                  </label>
-                  <Mail
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your email address"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 8px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Password
-                  </label>
-                  <Lock
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Your password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 40px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute",
-                      right: "8px",
-                      top: "32px",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {showPassword ? (
-                      <EyeOff style={{ width: "16px", height: "16px" }} />
-                    ) : (
-                      <Eye style={{ width: "16px", height: "16px" }} />
-                    )}
-                  </button>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
+              <>
+                <form
+                  onSubmit={handleLoginSubmit}
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px",
-                    width: "100%",
-                    padding: "10px",
-                    backgroundColor: "#007bff",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "14px",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    opacity: isLoading ? 0.7 : 1,
+                    flexDirection: "column",
+                    gap: "16px",
                   }}
                 >
-                  {isLoading ? "Logging in..." : "Login"}{" "}
-                  <ArrowRight style={{ width: "16px", height: "16px" }} />
-                </button>
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Email
+                    </label>
+                    <Mail
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Your email address"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Password
+                    </label>
+                    <Lock
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Your password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 40px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: "absolute",
+                        right: "8px",
+                        top: "32px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showPassword ? (
+                        <EyeOff style={{ width: "16px", height: "16px" }} />
+                      ) : (
+                        <Eye style={{ width: "16px", height: "16px" }} />
+                      )}
+                    </button>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px",
+                      width: "100%",
+                      padding: "10px",
+                      backgroundColor: "#007bff",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                      cursor: isLoading ? "not-allowed" : "pointer",
+                      opacity: isLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {isLoading ? "Logging in..." : "Login"}{" "}
+                    <ArrowRight style={{ width: "16px", height: "16px" }} />
+                  </button>
                 </form>
-                
+
                 <div
                   style={{
                     display: "flex",
@@ -552,198 +536,198 @@ console.log("alksdjfl alskjdf lgoogle data....",data)
                     </svg>
                     {isLoading ? "Processing..." : "Continue with Google"}
                   </button>
-                  </div>
-                  </>
-              ) : (
-                  <>
-              <form
-                onSubmit={handleSignupSubmit}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Full Name
-                  </label>
-                  <User
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Your full name"
-                    value={signupName}
-                    onChange={(e) => setSignupName(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 8px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
                 </div>
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Email
-                  </label>
-                  <Mail
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your email address"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 8px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Password
-                  </label>
-                  <Lock
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 40px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute",
-                      right: "8px",
-                      top: "32px",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {showPassword ? (
-                      <EyeOff style={{ width: "16px", height: "16px" }} />
-                    ) : (
-                      <Eye style={{ width: "16px", height: "16px" }} />
-                    )}
-                  </button>
-                </div>
-                <div style={{ position: "relative" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Confirm Password
-                  </label>
-                  <Lock
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
-                    }}
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm your password"
-                    value={signupConfirmPassword}
-                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 8px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
+              </>
+            ) : (
+              <>
+                <form
+                  onSubmit={handleSignupSubmit}
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px",
-                    width: "100%",
-                    padding: "10px",
-                    backgroundColor: "#007bff",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "14px",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    opacity: isLoading ? 0.7 : 1,
+                    flexDirection: "column",
+                    gap: "16px",
                   }}
                 >
-                  {isLoading
-                    ? "Creating account..."
-                    : "Create Executive Account"}{" "}
-                  <ArrowRight style={{ width: "16px", height: "16px" }} />
-                </button>
-                    </form>
-                    <div
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Full Name
+                    </label>
+                    <User
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Your full name"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Email
+                    </label>
+                    <Mail
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Your email address"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Password
+                    </label>
+                    <Lock
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 40px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: "absolute",
+                        right: "8px",
+                        top: "32px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showPassword ? (
+                        <EyeOff style={{ width: "16px", height: "16px" }} />
+                      ) : (
+                        <Eye style={{ width: "16px", height: "16px" }} />
+                      )}
+                    </button>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Confirm Password
+                    </label>
+                    <Lock
+                      style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "36px",
+                        width: "16px",
+                        height: "16px",
+                        color: "#666",
+                      }}
+                    />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 36px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px",
+                      width: "100%",
+                      padding: "10px",
+                      backgroundColor: "#007bff",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                      cursor: isLoading ? "not-allowed" : "pointer",
+                      opacity: isLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {isLoading
+                      ? "Creating account..."
+                      : "Create Executive Account"}{" "}
+                    <ArrowRight style={{ width: "16px", height: "16px" }} />
+                  </button>
+                </form>
+                <div
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -796,7 +780,7 @@ console.log("alksdjfl alskjdf lgoogle data....",data)
                     {isLoading ? "Processing..." : "Continue with Google"}
                   </button>
                 </div>
-                    </>
+              </>
             )}
           </div>
 

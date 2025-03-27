@@ -87,7 +87,6 @@ const Navbar = () => {
 
   const handleLogout = (async () => {
     if (!supabase) {
-      console.warn("Supabase not initialized, cannot logout");
       navigate.push("/login");
       return;
     }

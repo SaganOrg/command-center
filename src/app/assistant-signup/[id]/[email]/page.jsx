@@ -12,16 +12,17 @@ const supabase = createClient(
 );
 
 const AssistantSignup = ({ params }) => {
+  const { id ,email } = use(params); 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("");
+  const [signupEmail, setSignupEmail] = useState(email);
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
   const navigate = useRouter();
-  const { id } = use(params); // Extract user_id from URL params
+  // Extract user_id from URL params
 
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -150,9 +151,9 @@ const AssistantSignup = ({ params }) => {
           <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
             Assistant Signup
           </h1>
-          <p style={{ color: "#666", marginTop: "8px" }}>
+          {/* <p style={{ color: "#666", marginTop: "8px" }}>
             Use the Owner Code from your signup link
-          </p>
+          </p> */}
         </div>
 
         <div
@@ -244,7 +245,8 @@ const AssistantSignup = ({ params }) => {
                 type="email"
                 placeholder="Your email address"
                 value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
+                // onChange={(e) => setSignupEmail(e.target.value)}
+                disabled
                 style={{
                   width: "100%",
                   padding: "8px 8px 8px 36px",
