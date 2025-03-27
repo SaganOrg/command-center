@@ -70,7 +70,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
       }
 
       if (session?.user) {
-        await handleUser(session.user);
+        // await handleUser(session.user);
       } else {
         console.log("No session found, waiting for auth event...");
       }
