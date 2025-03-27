@@ -131,7 +131,7 @@ const Navbar = () => {
   
     // Execute the async function
     handleAuth();
-  }, [navigate]); // Added supabase as dependency since it's used in the effect
+  },[supabase]); // Added supabase as dependency since it's used in the effect
 
   const handleLogout = (async () => {
     if (!supabase) {
