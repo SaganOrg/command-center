@@ -67,6 +67,8 @@ const Navbar = () => {
       setIsLoggedIn(!!session);
       if (session) {
         setLoggedInUser(session.user.user_metadata);
+      } else {
+        
       }
     });
   

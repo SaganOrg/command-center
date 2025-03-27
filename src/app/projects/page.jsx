@@ -85,7 +85,6 @@ const Projects = () => {
           .select("*")
           .eq("id", user.id);
         if (publicError) {
-          console.error("Error fetching user:", publicError);
           toast({
             variant: "destructive",
             title: "Authentication Error",
@@ -175,16 +174,6 @@ const Projects = () => {
         if (error) throw error;
         tasksData = data || [];
       }
-      // Ensure all tasks have required fields with defaults
-      // const normalizedTasks = tasksData.map(task => ({
-      //   ...task,
-      //   title: task.title || "Untitled",
-      //   task: task.task || "",
-      //   status: task.status || "inbox",
-      //   comments: task.comments || [],
-      //   attachments: task.attachments || ""
-      // }));
-      // setTasks(normalizedTasks);
 
       const taskIds = tasksData.map((task) => task.id);
       const { data: commentsData, error: commentsError } = await supabase

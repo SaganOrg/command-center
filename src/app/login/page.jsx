@@ -16,7 +16,7 @@ const Login = () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
-  
+
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,13 +78,13 @@ const Login = () => {
     }
     const role = userData[0].role;
     if (role === "executive") {
-      if (userData[0].assistant_id===null) {
+      if (userData[0].assistant_id === null) {
         navigate.push("/settings");
         return;
       }
-      navigate.push("/voice"); 
+      navigate.push("/voice");
     } else if (role === "assistant") {
-      navigate.push("/projects"); 
+      navigate.push("/projects");
     }
     setIsLoading(false);
   };
@@ -205,7 +205,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://sagan-command-center.vercel.app/"
+        redirectTo: "https://sagan-command-center.vercel.app/",
       },
     });
     if (error) {
@@ -228,7 +228,7 @@ const Login = () => {
       }}
     >
       <div style={{ width: "100%", maxWidth: "400px" }}>
-        <div style={{ textAlign: "center", }}>
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
               display: "flex",

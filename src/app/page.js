@@ -97,13 +97,59 @@ export default function Home() {
       }
     );
 
-    // // Check if the user is already signed in on page load
-    // const checkUser = async () => {
-    //   const { data: { user } } = await supabase.auth.getUser();
-    //   if (user) {
-    //     await updateUserInTable(user);
-    //   }
-    // };
+    // Check if the user is already signed in on page load
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // User has signed in; update the users table
+        const {
+          data,
+          error,
+        } = await supabase
+          .from("users")
+          .select("*")
+            .eq("id", user.id);
+        
+        console.log(data, "laksjdflkjasdf")
+
+        if (error) {
+          await supabase.auth.signOut();
+          router.push("/login");
+        }
+
+        if (data.length>0) {
+          if (data[0].role === "executive") {
+            if (data[0].assistant_id === null) {
+              router.push("/settings");
+            } else {
+              router.push("/voice");
+            }
+          } else {
+            router.push("/projects");
+          }
+        } else {
+          const { error: insertError } = await supabase.from("users").insert({
+            id: user.id, // Use the Supabase auth user ID
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            role: "executive",
+          });
+  
+          if (insertError) {
+            console.error("Error inserting user into users table:", insertError);
+          } else {
+            router.push("/settings");
+            console.log("User added to users table:", user.id);
+          }
+        }
+      } else {
+        router.push("/login")
+      }
+    };
+
+    checkUser();
 
     // Cleanup the listener on component unmount
     return () => {
