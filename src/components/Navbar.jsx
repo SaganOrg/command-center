@@ -15,8 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from '@/lib/supabase'
-
+import { supabase } from "@/lib/supabase";
 
 const privateMenuItems = [
   {
@@ -46,6 +45,25 @@ const privateMenuItems = [
   },
 ];
 
+const privateAssistantItems = [
+ 
+  {
+    href: "/projects",
+    icon: <ListChecks className="h-4 w-4 mr-1" />,
+    label: "Project Board",
+  },
+  {
+    href: "/reports",
+    icon: <ClipboardList className="h-4 w-4 mr-1" />,
+    label: "Reports",
+  },
+  {
+    href: "/attachments",
+    icon: <BookOpen className="h-4 w-4 mr-1" />,
+    label: "Reference",
+  }
+];
+
 const Navbar = () => {
   const location = usePathname();
   const navigate = useRouter();
@@ -53,7 +71,6 @@ const Navbar = () => {
   const [loggedInUser, setLoggedInUser] = useState(false);
 
   // Private menu items (visible only when logged in)
- 
 
   // Check authentication state on mount and listen for changes if Supabase is available
   useEffect(() => {
@@ -61,33 +78,49 @@ const Navbar = () => {
       setIsLoggedIn(false);
       return;
     }
-  
+
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
       if (session) {
-        setLoggedInUser(session.user.user_metadata);
+        // setLoggedInUser(session.user.user_metadata);
+        supabase
+          .from("users")
+          .select("*")
+          .eq("id", session?.user.id)
+          .then((data, error) => {
+            if (error) throw error;
+            console.log(data, "alksjdflkasjdf laksjdflk asf");
+            setLoggedInUser(data.data[0]);
+          });
       } else {
-        
       }
     });
-  
+
     // Set up auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setIsLoggedIn(!!session);
         if (session) {
-          setLoggedInUser(session.user.user_metadata);
+          supabase
+          .from("users")
+          .select("*")
+          .eq("id", session?.user.id)
+          .then((data, error) => {
+            if (error) throw error;
+            console.log(data, "alksjdflkasjdf laksjdflk asf");
+            setLoggedInUser(data.data[0]);
+          });
         }
       }
     );
-  
+
     return () => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
 
-  const handleLogout = (async () => {
+  const handleLogout = async () => {
     if (!supabase) {
       navigate.push("/login");
       return;
@@ -98,11 +131,11 @@ const Navbar = () => {
     } else {
       navigate.push("/login");
     }
-  });
-  
-  const handleLogin = (() => {
+  };
+
+  const handleLogin = () => {
     navigate.push("/login");
-  });
+  };
 
   return (
     <nav className="bg-background border-b border-border/30 py-2 px-4">
@@ -113,8 +146,28 @@ const Navbar = () => {
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
             {/* Private menu items (visible only when logged in) */}
-            {isLoggedIn &&
+            {isLoggedIn && loggedInUser?.role==="executive" &&
               privateMenuItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex items-center",
+                    location.pathname === item.href &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                  asChild
+                >
+                  <Link href={item.href}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                </Button>
+              ))}
+            
+              {isLoggedIn && loggedInUser?.role==="assistant" &&
+              privateAssistantItems.map((item) => (
                 <Button
                   key={item.href}
                   variant="ghost"
