@@ -79,9 +79,10 @@ const Projects = () => {
           router.push("/login");
           return;
         }
+// console.log(publicUser[0])
 
-
-        setUserRole(publicUser[0].role || null);
+        setUserRole(publicUser[0] || null);
+        console.log(userRole);
         if (publicUser[0].role === "assistant") {
           setUserId(publicUser[0].executive_id || null);
         } else {
@@ -121,21 +122,30 @@ const Projects = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      setUserRole(user.user_metadata.role);
+      // setUserRole(user.user_metadata.role);
 
+      const { data: publicUser, error: publicError } = await supabase.from("users").select("*").eq("id", user.id);
+        if (publicError) {
+          console.error("Error fetching user:", publicError);
+          toast({ variant: "destructive", title: "Authentication Error", description: "Could not verify user. Please log in again." });
+          router.push("/login");
+          return;
+      }
+      
+      
       let tasksData;
-      if (user.user_metadata.role === "assistant") {
+      if (publicUser[0].role === "assistant") {
         const { data, error } = await supabase
           .from("tasks")
           .select("*")
-          .eq("created_by", user.user_metadata.owner_id);
+          .eq("assigned_to", publicUser[0].id);
         if (error) throw error;
         tasksData = data || [];
       } else {
         const { data, error } = await supabase
           .from("tasks")
           .select("*")
-          .eq("created_by", user.id);
+          .eq("created_by", publicUser[0].id);
         if (error) throw error;
         tasksData = data || [];
       }
@@ -313,6 +323,12 @@ const Projects = () => {
 
       let taskToAdd;
       if (publicUser[0].role === "executive") {
+        if (publicUser[0].assistant_id === null) {
+          toast({ title: "Error", description: "Please create assistant first. Redirecting to settings page....", variant: "destructive" });
+          setIsNewTaskDialogOpen(false);
+          router.push("/settings");
+          return; 
+        }
         taskToAdd = {
           title: newTask.title || "Untitled Project",
           task: newTask.task || "",
@@ -332,7 +348,7 @@ const Projects = () => {
           status: newTask.status || newTaskStatus,
           labels: "",
           attachments: "",
-          created_by: user.user_metadata.owner_id,
+          created_by: publicUser[0].executive_id,
           assigned_to: user.id,
           due_date: newTask.due_date || format(new Date(), "yyyy-MM-dd"),
           purpose: newTask.purpose || "",

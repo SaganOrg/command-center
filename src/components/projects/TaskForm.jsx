@@ -333,10 +333,11 @@ const TaskForm = ({
       
       <div className="flex justify-between gap-2 pt-6 mt-6 border-t">
         <div>
-        <Button variant="destructive" onClick={handleDelete} size="sm">
+          {task && <Button variant="destructive" onClick={handleDelete} size="sm">
           <X className="h-4 w-4 mr-1" />
           Delete task
-        </Button>
+        </Button>}
+        
         </div>
       <div className='flex gap-2'><Button variant="outline" onClick={onCancel} size="sm">
           <X className="h-4 w-4 mr-1" />

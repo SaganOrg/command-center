@@ -17,7 +17,7 @@ const AssistantSignup = ({ params }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState(email);
+  const [signupEmail, setSignupEmail] = useState(decodeURIComponent(email));
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
