@@ -244,7 +244,7 @@ const Voice = () => {
           },
           {
             role: "user",
-            content: `Generate a concise title for a task based on this transcription: ${transcribedText}`,
+            content: `In Five Words or Less, Generate a Title for this Task based on this transcription: ${transcribedText}`,
           },
         ],
         max_tokens: 10,

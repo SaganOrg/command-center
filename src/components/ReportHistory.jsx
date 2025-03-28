@@ -292,9 +292,9 @@ const ReportHistory= () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+                {/* <TableHead>Status</TableHead> */}
                 <TableHead>Busyness</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -304,7 +304,7 @@ const ReportHistory= () => {
                     <TableCell className="font-medium">
                       {format(new Date(report.date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         report.status === 'Reviewed' 
                           ? 'bg-green-100 text-green-800' 
@@ -312,7 +312,7 @@ const ReportHistory= () => {
                       }`}>
                         {report.status || 'Pending'}
                       </span>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>{getBusynessLabel(report.business_level?.toString() || '5')}</TableCell>
                     <TableCell className="text-right">
                       <Button
