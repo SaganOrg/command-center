@@ -273,7 +273,7 @@ const ReportHistory= () => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Your Reports</CardTitle>
-          <CardDescription>View all your previously submitted reports</CardDescription>
+          <CardDescription>Your Assistant's Previously Generated Reports</CardDescription>
           <div className="relative mt-2">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
