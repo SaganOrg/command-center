@@ -137,7 +137,7 @@ const Settings = () => {
       return;
     } else {
       const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
-      const signupLink = `https://sagan-command-center.vercel.app/assistant-signup/${user.id}/${recipientEmail}`; // Replace with your actual signup URL
+      const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${user.id}/${recipientEmail}`; 
 
       const emailData = {
         sender: {

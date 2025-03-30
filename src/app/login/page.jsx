@@ -162,7 +162,7 @@ const Login = () => {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: "https://sagan-command-center.vercel.app/reset-password",
+      redirectTo: "https://commandcenter.getsagan.com/reset-password",
     });
 
     if (error) {
@@ -205,7 +205,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://sagan-command-center.vercel.app/",
+        redirectTo: "https://commandcenter.getsagan.com/",
       },
     });
     if (error) {
