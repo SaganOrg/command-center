@@ -50,22 +50,29 @@ export default function Home() {
 
         if (session?.user) {
           // User has signed in; update the users table
-          const {
-            data,
-            error,
-          } = await supabase
+          const { data, error } = await supabase
             .from("users")
             .select("*")
-              .eq("id", session.user.id);
-          
-          console.log(data, "laksjdflkjasdf")
+            .eq("id", session.user.id);
+
+          console.log(data, "laksjdflkjasdf");
 
           if (error) {
             await supabase.auth.signOut();
             router.push("/login");
           }
 
-          if (data.length>0) {
+          if (data[0].status === "pending") {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+              console.error("Logout error:", error.message);
+            } else {
+              navigate.push("/login");
+              return;
+            }
+          }
+
+          if (data.length > 0) {
             if (data[0].role === "executive") {
               if (data[0].assistant_id === null) {
                 router.push("/settings");
@@ -79,45 +86,59 @@ export default function Home() {
             const { error: insertError } = await supabase.from("users").insert({
               id: session?.user.id, // Use the Supabase auth user ID
               email: session?.user.email,
-              full_name: session?.user.user_metadata?.full_name || session?.user.email.split("@")[0],
+              full_name:
+                session?.user.user_metadata?.full_name ||
+                session?.user.email.split("@")[0],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               role: "executive",
+              status: "pending",
             });
-    
+
             if (insertError) {
-              console.error("Error inserting user into users table:", insertError);
+              console.error(
+                "Error inserting user into users table:",
+                insertError
+              );
             } else {
               router.push("/settings");
               console.log("User added to users table:", user.id);
             }
           }
         }
-        
       }
     );
 
     // Check if the user is already signed in on page load
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         // User has signed in; update the users table
-        const {
-          data,
-          error,
-        } = await supabase
+        const { data, error } = await supabase
           .from("users")
           .select("*")
-            .eq("id", user.id);
-        
-        console.log(data, "laksjdflkjasdf")
+          .eq("id", user.id);
+
+        console.log(data, "laksjdflkjasdf");
 
         if (error) {
           await supabase.auth.signOut();
           router.push("/login");
         }
 
-        if (data.length>0) {
+        if (data[0].status === "pending") {
+          const { error } = await supabase.auth.signOut();
+          if (error) {
+            console.error("Logout error:", error.message);
+          } else {
+            navigate.push("/login");
+            return;
+          }
+        }
+
+        if (data.length > 0) {
           if (data[0].role === "executive") {
             if (data[0].assistant_id === null) {
               router.push("/settings");
@@ -131,21 +152,26 @@ export default function Home() {
           const { error: insertError } = await supabase.from("users").insert({
             id: user.id, // Use the Supabase auth user ID
             email: user.email,
-            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+            full_name:
+              user.user_metadata?.full_name || user.email.split("@")[0],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             role: "executive",
+            status: "pending",
           });
-  
+
           if (insertError) {
-            console.error("Error inserting user into users table:", insertError);
+            console.error(
+              "Error inserting user into users table:",
+              insertError
+            );
           } else {
             router.push("/settings");
             console.log("User added to users table:", user.id);
           }
         }
       } else {
-        router.push("/login")
+        router.push("/login");
       }
     };
 

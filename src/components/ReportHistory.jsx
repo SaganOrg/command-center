@@ -292,7 +292,7 @@ const ReportHistory= () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                {/* <TableHead>Status</TableHead> */}
+                {/* <TableHead>Status</TableHead> aha ad dfds s sfsgsdfsdf sd ewqsdf a das  gasd asdf ga safsdf sadfsa fas f */}
                 <TableHead>Busyness</TableHead>
                 {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>

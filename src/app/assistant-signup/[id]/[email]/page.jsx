@@ -101,7 +101,7 @@ const AssistantSignup = ({ params }) => {
 
       const { error: insertError } = await supabase
       .from("users")
-      .insert({ id: data.user.id, email: data.user.email, role:"assistant", full_name:signupName, executive_id:id })
+      .insert({ id: data.user.id, email: data.user.email, role:"assistant", full_name:signupName, executive_id:id, status:"approved" })
       .select();
 
 

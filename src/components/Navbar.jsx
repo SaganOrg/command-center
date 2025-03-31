@@ -17,6 +17,39 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
+const adminMenu = [
+  {
+    href: "/admin",
+    icon: <Mic className="h-4 w-4 mr-1" />,
+    label: "Dashboard",
+  },
+  {
+    href: "/voice",
+    icon: <Mic className="h-4 w-4 mr-1" />,
+    label: "Voice Input",
+  },
+  {
+    href: "/projects",
+    icon: <ListChecks className="h-4 w-4 mr-1" />,
+    label: "Project Board",
+  },
+  {
+    href: "/reports",
+    icon: <ClipboardList className="h-4 w-4 mr-1" />,
+    label: "Reports",
+  },
+  {
+    href: "/attachments",
+    icon: <BookOpen className="h-4 w-4 mr-1" />,
+    label: "Reference",
+  },
+  {
+    href: "/settings",
+    icon: <Settings className="h-4 w-4 mr-1" />,
+    label: "Settings",
+  },
+];
+
 const privateMenuItems = [
   {
     href: "/voice",
@@ -145,6 +178,25 @@ const Navbar = () => {
         </Link>
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
+          {isLoggedIn && loggedInUser?.role==="admin" &&
+              adminMenu.map((item) => (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex items-center",
+                    location.pathname === item.href &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                  asChild
+                >
+                  <Link href={item.href}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                </Button>
+              ))}
             {/* Private menu items (visible only when logged in) */}
             {isLoggedIn && loggedInUser?.role==="executive" &&
               privateMenuItems.map((item) => (

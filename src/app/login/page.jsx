@@ -76,6 +76,19 @@ const Login = () => {
       setIsLoading(false);
       return;
     }
+
+    if (userData[0].status === "pending") {
+      const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout error:", error.message);
+    } else {
+      // navigate.push("/login");
+      setAuthError("Please wait until your account is approved by one admin");
+      setIsLoading(false);
+      return;
+    }
+    }
+
     const role = userData[0].role;
     if (role === "executive") {
       if (userData[0].assistant_id === null) {
@@ -85,6 +98,8 @@ const Login = () => {
       navigate.push("/voice");
     } else if (role === "assistant") {
       navigate.push("/projects");
+    } else {
+      navigate.push("/admin")
     }
     setIsLoading(false);
   };
@@ -129,6 +144,7 @@ const Login = () => {
           email: data.user.email,
           role: "executive",
           full_name: signupName,
+          status:"pending"
         })
         .select();
 
@@ -137,6 +153,14 @@ const Login = () => {
         setIsLoading(false);
         return;
       }
+
+      const { error } = await supabase.auth.signOut();
+          if (error) {
+            console.error("Logout error:", error.message);
+          } else {
+            // navigate.push("/login");
+            setAuthError("Please wait to approve your account by admin");
+          }
     }
 
     if (error) {
@@ -146,7 +170,7 @@ const Login = () => {
     }
     // setAuthError("Signup success as an executive");
     setIsLoading(false);
-    navigate.push("/");
+    // navigate.push("/");
   };
 
   const handleForgotPasswordSubmit = async (e) => {
