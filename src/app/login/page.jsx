@@ -77,7 +77,7 @@ const Login = () => {
       return;
     }
 
-    if (userData[0].status === "pending") {
+    if (userData[0].status === "pending"|| userData[0].status === "rejected") {
       const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Logout error:", error.message);

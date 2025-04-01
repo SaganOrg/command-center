@@ -69,7 +69,7 @@ export default function Home() {
             router.push("/login");
           }
 
-          if (data[0].status === "pending") {
+          if (data[0].status === "pending" || data[0].status === "rejected") {
             const { error } = await supabase.auth.signOut();
             if (error) {
               toast({
@@ -150,7 +150,7 @@ export default function Home() {
           router.push("/login");
         }
 
-        if (data[0].status === "pending") {
+        if (data[0].status === "pending" || data[0].status === "rejected") {
           const { error } = await supabase.auth.signOut();
           if (error) {
             console.error("Logout error:", error.message);
