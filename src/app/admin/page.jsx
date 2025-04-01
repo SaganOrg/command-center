@@ -35,12 +35,12 @@ import {
 } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const Reports = () => {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
+const Reports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [reports, setReports] = useState([]);
@@ -49,13 +49,13 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
-  const [editingId, setEditingId] = useState(null); // Track which row is being edited
+  const [editingId, setEditingId] = useState(null);
   const { toast } = useToast();
   const router = useRouter();
 
   const ITEMS_PER_PAGE = 10;
 
-  // Fetch authenticated user ID and owner_id
+  // Fetch authenticated user ID and executive_id
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -81,6 +81,7 @@ const Reports = () => {
         if (publicUser) {
           const ownerId = publicUser[0].executive_id;
           setExecutiveId(ownerId || null);
+          setUserRole(publicUser[0].role); // Set current user's role
         }
         setUserId(user.id);
       } else {
@@ -92,57 +93,16 @@ const Reports = () => {
     fetchUser();
   }, []);
 
-  // Fetch user role
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Could not verify user. Please log in again.",
-        });
-        router.push("/login");
-        return;
-      }
-      if (user) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", user.id);
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Not Logged In",
-            description: "Please log in to use voice features.",
-          });
-        }
-        if (data[0].role) {
-          setUserRole(data[0].role || null);
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Not Logged In",
-          description: "Please log in to access reports.",
-        });
-        router.push("/login");
-      }
-    };
-    fetchUserRole();
-  }, []);
-
-  // Fetch reports
+  // Fetch users with role "executive" or "admin"
   useEffect(() => {
     const fetchReports = async () => {
       if (!userId) return;
 
       setLoading(true);
-        let query = supabase.from("users").select("*").eq("role", "executive");
+      let query = supabase
+        .from("users")
+        .select("*")
+        .in("role", ["executive", "admin"]); // Fetch both executive and admin users
 
       if (executiveId) {
         query = query.or(`executive_id.eq.${executiveId}`);
@@ -154,7 +114,7 @@ const Reports = () => {
 
       if (error) {
         console.error("Error fetching reports:", error);
-        toast.error("Failed to fetch report history.", { duration: 3000 });
+        toast.error("Failed to fetch users.", { duration: 3000 });
       } else {
         setReports(data || []);
       }
@@ -166,6 +126,15 @@ const Reports = () => {
 
   // Handle status update
   const updateStatus = async (userId, newStatus) => {
+    if (userRole !== "executive" && userRole !== "admin") {
+      toast({
+        variant: "destructive",
+        title: "Permission Denied",
+        description: "Only executives and admins can update status.",
+      });
+      return;
+    }
+
     const { data, error } = await supabase
       .from("users")
       .update({ status: newStatus })
@@ -184,13 +153,50 @@ const Reports = () => {
         title: "Success",
         description: `User status updated to ${newStatus}`,
       });
-      // Update local state instead of refreshing
       setReports((prevReports) =>
         prevReports.map((report) =>
           report.id === userId ? { ...report, status: newStatus } : report
         )
       );
-      setEditingId(null); // Close edit mode after update
+      setEditingId(null);
+    }
+  };
+
+  // Handle role update
+  const updateRole = async (userId, newRole) => {
+    if (userRole !== "admin") {
+      toast({
+        variant: "destructive",
+        title: "Permission Denied",
+        description: "Only admins can update roles.",
+      });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({ role: newRole })
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update role",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `User role updated to ${newRole}`,
+      });
+      setReports((prevReports) =>
+        prevReports.map((report) =>
+          report.id === userId ? { ...report, role: newRole } : report
+        )
+      );
+      setEditingId(null);
     }
   };
 
@@ -255,7 +261,7 @@ const Reports = () => {
           Loading...
         </motion.h3>
         <motion.p variants={itemVariants} className="text-muted-foreground">
-          Fetching your report history.
+          Fetching users...
         </motion.p>
       </motion.div>
     );
@@ -276,11 +282,10 @@ const Reports = () => {
           <AlertCircle className="h-12 w-12 text-muted-foreground" />
         </motion.div>
         <motion.h3 variants={itemVariants} className="text-xl font-medium mb-2">
-          No Reports Found
+          No Users Found
         </motion.h3>
         <motion.p variants={itemVariants} className="text-muted-foreground">
-          Your assistant haven't submitted any reports yet. Create your first
-          report to see it here.
+          No executive or admin users found in the system.
         </motion.p>
       </motion.div>
     );
@@ -335,6 +340,7 @@ const Reports = () => {
                           <TableHead>Email</TableHead>
                           <TableHead>Full Name</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Role</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -361,59 +367,96 @@ const Reports = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                {(report.status || "pending") === "pending" && editingId !== report.id ? (
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateStatus(report.id, "approved")}
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateStatus(report.id, "rejected")}
-                                      className="text-red-600 border-red-600 hover:bg-red-50"
-                                    >
-                                      Reject
-                                    </Button>
-                                  </div>
-                                ) : editingId === report.id ? (
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateStatus(report.id, "approved")}
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateStatus(report.id, "rejected")}
-                                      className="text-red-600 border-red-600 hover:bg-red-50"
-                                    >
-                                      Reject
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setEditingId(null)}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="flex items-center gap-1"
-                                    onClick={() => setEditingId(report.id)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    <span>Edit</span>
-                                  </Button>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    report.role === "admin"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-purple-100 text-purple-800"
+                                  }`}
+                                >
+                                  {report.role || "executive"}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {(userRole === "executive" || userRole === "admin") && (
+                                  <>
+                                    {(report.status || "pending") === "pending" && editingId !== report.id ? (
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => updateStatus(report.id, "approved")}
+                                        >
+                                          Approve
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => updateStatus(report.id, "rejected")}
+                                          className="text-red-600 border-red-600 hover:bg-red-50"
+                                        >
+                                          Reject
+                                        </Button>
+                                      </div>
+                                    ) : editingId === report.id ? (
+                                      <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => updateStatus(report.id, "approved")}
+                                          >
+                                            Approve
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => updateStatus(report.id, "rejected")}
+                                            className="text-red-600 border-red-600 hover:bg-red-50"
+                                          >
+                                            Reject
+                                          </Button>
+                                        </div>
+                                        {userRole === "admin" && (
+                                          <div className="flex gap-2">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => updateRole(report.id, "admin")}
+                                              disabled={report.role === "admin"}
+                                            >
+                                              Set Admin
+                                            </Button>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => updateRole(report.id, "executive")}
+                                              disabled={report.role === "executive"}
+                                            >
+                                              Set Executive
+                                            </Button>
+                                          </div>
+                                        )}
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setEditingId(null)}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex items-center gap-1"
+                                        onClick={() => setEditingId(report.id)}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                        <span>Edit</span>
+                                      </Button>
+                                    )}
+                                  </>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -421,7 +464,7 @@ const Reports = () => {
                         ) : (
                           <TableRow>
                             <TableCell
-                              colSpan={5}
+                              colSpan={6}
                               className="text-center py-4 text-muted-foreground"
                             >
                               No users match your search criteria.

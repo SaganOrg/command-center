@@ -7,6 +7,7 @@ import Hero from "../components/Hero";
 import AnimatedTransition from "../components/AnimatedTransition";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const features = [
   {
@@ -41,6 +42,7 @@ const features = [
 
 export default function Home() {
   const router = useRouter();
+   const { toast } = useToast();
 
   // Listen for auth state changes
   useEffect(() => {
@@ -59,14 +61,29 @@ export default function Home() {
 
           if (error) {
             await supabase.auth.signOut();
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "There is an error. Please try again. ",
+            });
             router.push("/login");
           }
 
           if (data[0].status === "pending") {
             const { error } = await supabase.auth.signOut();
             if (error) {
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: `Could not verify user. Please log in again. ${error.message}`,
+              });
               console.error("Logout error:", error.message);
             } else {
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: `Your account is not active. Soon your account will be active by our admin.`,
+              });
               navigate.push("/login");
               return;
             }
@@ -125,6 +142,11 @@ export default function Home() {
 
         if (error) {
           await supabase.auth.signOut();
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: `There is an error. Please try again later. `,
+          });
           router.push("/login");
         }
 
@@ -133,6 +155,11 @@ export default function Home() {
           if (error) {
             console.error("Logout error:", error.message);
           } else {
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: `Your account is not active. Soon your account will be active by our admin.`,
+            });
             navigate.push("/login");
             return;
           }
