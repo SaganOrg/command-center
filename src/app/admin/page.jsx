@@ -54,6 +54,66 @@ const Reports = () => {
   const router = useRouter();
 
   const ITEMS_PER_PAGE = 10;
+  const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
+
+  // Function to send status update email
+  const sendStatusUpdateEmail = async (recipientEmail, newStatus, userId) => {
+    const signupLink = `https://commandcenter.getsagan.com/login`;
+
+    const emailData = {
+      sender: {
+        name: "Sagan",
+        email: "jon@getsagan.com",
+      },
+      to: [{ email: recipientEmail, name: "User" }],
+      subject: `Your Account Status Update - ${newStatus}`,
+      htmlContent: `
+        <p>Hello,</p>
+        <p>Your account status has been updated to <strong>${newStatus}</strong>.</p>
+        ${
+          newStatus === "approved"
+            ? `<p>Please click the link below to start:</p>
+               <p><a href="${signupLink}">${signupLink}</a></p>`
+            : ""
+        }
+        <p>If you have any questions, please contact our support team.</p>
+        <p>Best regards,<br>Sagan Team</p>
+      `,
+    };
+
+    try {
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "api-key": apiKey,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Notification Sent",
+          description: `Status update email sent to ${recipientEmail}`,
+        });
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(
+          `Failed to send email: ${errorData.message || response.statusText}`
+        );
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        variant: "destructive",
+        title: "Email Error",
+        description: "Failed to send status update email",
+      });
+      return false;
+    }
+  };
 
   // Fetch authenticated user ID and executive_id
   useEffect(() => {
@@ -81,7 +141,7 @@ const Reports = () => {
         if (publicUser) {
           const ownerId = publicUser[0].executive_id;
           setExecutiveId(ownerId || null);
-          setUserRole(publicUser[0].role); // Set current user's role
+          setUserRole(publicUser[0].role);
         }
         setUserId(user.id);
       } else {
@@ -102,7 +162,7 @@ const Reports = () => {
       let query = supabase
         .from("users")
         .select("*")
-        .in("role", ["executive", "admin"]); // Fetch both executive and admin users
+        .in("role", ["executive", "admin"]);
 
       if (executiveId) {
         query = query.or(`executive_id.eq.${executiveId}`);
@@ -124,7 +184,7 @@ const Reports = () => {
     fetchReports();
   }, [userId, executiveId]);
 
-  // Handle status update
+  // Handle status update with email notification
   const updateStatus = async (userId, newStatus) => {
     if (userRole !== "executive" && userRole !== "admin") {
       toast({
@@ -134,6 +194,12 @@ const Reports = () => {
       });
       return;
     }
+
+    const currentReport = reports.find((report) => report.id === userId);
+    const currentStatus = currentReport.status || "pending";
+    const shouldSendEmail = 
+      (currentStatus === "pending" && (newStatus === "approved" || newStatus === "rejected")) ||
+      (currentStatus === "rejected" && newStatus === "approved");
 
     const { data, error } = await supabase
       .from("users")
@@ -159,6 +225,10 @@ const Reports = () => {
         )
       );
       setEditingId(null);
+
+      if (shouldSendEmail) {
+        await sendStatusUpdateEmail(currentReport.email, newStatus, userId);
+      }
     }
   };
 
