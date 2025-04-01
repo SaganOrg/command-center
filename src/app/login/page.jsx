@@ -98,7 +98,7 @@ const Login = () => {
       navigate.push("/voice");
     } else if (role === "assistant") {
       navigate.push("/projects");
-    } else {
+    } else if(role==="admin") {
       navigate.push("/admin")
     }
     setIsLoading(false);
