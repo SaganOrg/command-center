@@ -276,7 +276,7 @@ const Voice = () => {
         toast({
           title: "Task Added",
           description:
-            "Your voice note has been transcribed and added to your tasks!",
+            "Your voice note has been transcribed and added to your project board.",
         });
       }
     

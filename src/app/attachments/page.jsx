@@ -89,6 +89,7 @@ const Library = () => {
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
@@ -723,6 +724,7 @@ const Library = () => {
   };
 
   const onSubmit = async (data) => {
+    setIsLoading(true)
     const {
       data: { user },
       error,
@@ -789,6 +791,9 @@ const Library = () => {
         title: "Error",
         description: "Failed to save item",
       });
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
@@ -1107,7 +1112,16 @@ const Library = () => {
                         accept="image/*,application/pdf"
                         multiple
                         onChange={handleFileUpload}
+                        disabled={isLoading}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
                       />
+                      {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
+              <span className="text-sm text-gray-600 animate-pulse">
+                Processing...
+              </span>
+            </div>
+          )}
                     </FormControl>
                     <div className="mt-2 space-y-2">
                       {field.value?.map((att) => (
@@ -1122,6 +1136,7 @@ const Library = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => removeAttachment(att.id)}
+                            disabled={isLoading}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -1266,8 +1281,10 @@ const Library = () => {
                 </div>
               )}
               <DialogFooter>
-                <Button type="submit">Save reference</Button>
-              </DialogFooter>
+  <Button type="submit" disabled={isLoading}>
+    {isLoading ? "Saving..." : "Save reference"}
+  </Button>
+</DialogFooter>
             </form>
           </Form>
         </DialogContent>
@@ -1398,7 +1415,16 @@ const Library = () => {
                         accept="image/*,application/pdf"
                         multiple
                         onChange={handleFileUpload}
+                        disabled={isLoading}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
                       />
+                      {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
+              <span className="text-sm text-gray-600 animate-pulse">
+                Processing...
+              </span>
+            </div>
+          )}
                     </FormControl>
                     <div className="mt-2 space-y-2">
                       {field.value?.map((att) => (
@@ -1557,8 +1583,10 @@ const Library = () => {
                 </div>
               )}
               <DialogFooter>
-                <Button type="submit">Update reference</Button>
-              </DialogFooter>
+  <Button type="submit" disabled={isLoading}>
+    {isLoading ? "Updating..." : "Update reference"}
+  </Button>
+</DialogFooter>
             </form>
           </Form>
         </DialogContent>

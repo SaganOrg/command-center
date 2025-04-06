@@ -145,12 +145,13 @@ const Settings = () => {
           email: "jon@getsagan.com", // Replace with your verified sender email
         },
         to: [{ email: recipientEmail, name: "Recipient Name" }],
-        subject: "Invitation to Join as an Assistant",
+        subject: "You’ve Been Invited to Join the Command Center",
         htmlContent: `
-      <p>Hello,</p>
-      <p>You’ve been invited to join as an assistant on our platform!</p>
-      <p>Please click the link below to sign up:</p>
+      <p>Hi,</p>
+      <p>Youn have been invited to join the Command Center as an Executive Assistant.</p>
+      <p>Click the link below to create your account and get started:</p>
       <p><a href="${signupLink}">${signupLink}</a></p>
+      <p>Looking forward to having you on board.</p>
       <p>Best regards,<br>Your Team</p>
     `,
       };

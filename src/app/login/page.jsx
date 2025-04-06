@@ -104,7 +104,7 @@ const Login = () => {
     setIsLoading(false);
   };
 
-  const handleSignupSubmit = async (e) => {
+   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
@@ -159,7 +159,8 @@ const Login = () => {
             console.error("Logout error:", error.message);
           } else {
             // navigate.push("/login");
-            setAuthError("Please wait to approve your account by admin");
+            setAuthError("Your account is pending approval. You will receive an email once it is approved by Sagan.");
+            setIsLogin(true);
           }
     }
 

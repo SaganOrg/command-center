@@ -69,7 +69,7 @@ const ReportHistory= () => {
           setExecutiveId(ownerId);
         } else {
           console.warn('No owner_id found in user_metadata');
-          toast.warning('No executive ID found. Only your own reports will be shown.', { duration: 3000 });
+          // toast.warning('No executive ID found. Only your own reports will be shown.', { duration: 3000 });
           setExecutiveId(null);
         }
         }

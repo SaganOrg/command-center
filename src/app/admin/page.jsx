@@ -66,17 +66,18 @@ const Reports = () => {
         email: "jon@getsagan.com",
       },
       to: [{ email: recipientEmail, name: "User" }],
-      subject: `Your Account Status Update - ${newStatus}`,
+      subject: `Welcome to the Executive Command Center`,
       htmlContent: `
         <p>Hello,</p>
-        <p>Your account status has been updated to <strong>${newStatus}</strong>.</p>
+        <p>Your account is now <strong>${newStatus}</strong>.</p>
         ${
           newStatus === "approved"
             ? `<p>Please click the link below to start:</p>
                <p><a href="${signupLink}">${signupLink}</a></p>`
             : ""
         }
-        <p>If you have any questions, please contact our support team.</p>
+        <p>The Command Center is your dedicated workspace for collaborating with your Executive Assistant. Everything you need is in one place - from projects to EOD reports.</p>
+<p>If you have any questions or need help, let us know! </p> </br></br>
         <p>Best regards,<br>Sagan Team</p>
       `,
     };
@@ -197,8 +198,9 @@ const Reports = () => {
 
     const currentReport = reports.find((report) => report.id === userId);
     const currentStatus = currentReport.status || "pending";
-    const shouldSendEmail = 
-      (currentStatus === "pending" && (newStatus === "approved" || newStatus === "rejected")) ||
+    const shouldSendEmail =
+      (currentStatus === "pending" &&
+        (newStatus === "approved" || newStatus === "rejected")) ||
       (currentStatus === "rejected" && newStatus === "approved");
 
     const { data, error } = await supabase
@@ -276,7 +278,7 @@ const Reports = () => {
       report.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (report.full_name &&
         report.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     if (activeTab === "all") return matchesSearch;
     return matchesSearch && (report.status || "pending") === activeTab;
   });
@@ -395,7 +397,11 @@ const Reports = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+                <Tabs
+                  defaultValue="all"
+                  className="w-full"
+                  onValueChange={setActiveTab}
+                >
                   <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -419,7 +425,10 @@ const Reports = () => {
                           paginatedReports.map((report) => (
                             <TableRow key={report.id}>
                               <TableCell className="font-medium">
-                                {format(new Date(report.created_at), "MMM dd, yyyy")}
+                                {format(
+                                  new Date(report.created_at),
+                                  "MMM dd, yyyy"
+                                )}
                               </TableCell>
                               <TableCell>{report.email}</TableCell>
                               <TableCell>{report.full_name || "N/A"}</TableCell>
@@ -428,7 +437,8 @@ const Reports = () => {
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                                     (report.status || "pending") === "approved"
                                       ? "bg-green-100 text-green-800"
-                                      : (report.status || "pending") === "rejected"
+                                      : (report.status || "pending") ===
+                                        "rejected"
                                       ? "bg-red-100 text-red-800"
                                       : "bg-amber-100 text-amber-800"
                                   }`}
@@ -448,21 +458,27 @@ const Reports = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                {(userRole === "executive" || userRole === "admin") && (
+                                {(userRole === "executive" ||
+                                  userRole === "admin") && (
                                   <>
-                                    {(report.status || "pending") === "pending" && editingId !== report.id ? (
+                                    {(report.status || "pending") ===
+                                      "pending" && editingId !== report.id ? (
                                       <div className="flex gap-2">
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => updateStatus(report.id, "approved")}
+                                          onClick={() =>
+                                            updateStatus(report.id, "approved")
+                                          }
                                         >
                                           Approve
                                         </Button>
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => updateStatus(report.id, "rejected")}
+                                          onClick={() =>
+                                            updateStatus(report.id, "rejected")
+                                          }
                                           className="text-red-600 border-red-600 hover:bg-red-50"
                                         >
                                           Reject
@@ -474,14 +490,24 @@ const Reports = () => {
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => updateStatus(report.id, "approved")}
+                                            onClick={() =>
+                                              updateStatus(
+                                                report.id,
+                                                "approved"
+                                              )
+                                            }
                                           >
                                             Approve
                                           </Button>
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => updateStatus(report.id, "rejected")}
+                                            onClick={() =>
+                                              updateStatus(
+                                                report.id,
+                                                "rejected"
+                                              )
+                                            }
                                             className="text-red-600 border-red-600 hover:bg-red-50"
                                           >
                                             Reject
@@ -492,7 +518,9 @@ const Reports = () => {
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              onClick={() => updateRole(report.id, "admin")}
+                                              onClick={() =>
+                                                updateRole(report.id, "admin")
+                                              }
                                               disabled={report.role === "admin"}
                                             >
                                               Set Admin
@@ -500,8 +528,15 @@ const Reports = () => {
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              onClick={() => updateRole(report.id, "executive")}
-                                              disabled={report.role === "executive"}
+                                              onClick={() =>
+                                                updateRole(
+                                                  report.id,
+                                                  "executive"
+                                                )
+                                              }
+                                              disabled={
+                                                report.role === "executive"
+                                              }
                                             >
                                               Set Executive
                                             </Button>

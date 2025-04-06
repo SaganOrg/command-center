@@ -82,7 +82,7 @@ export default function Home() {
               toast({
                 variant: "destructive",
                 title: "Authentication Error",
-                description: `Your account is not active. Soon your account will be active by our admin.`,
+                description: `Your account is pending approval. You will receive an email once it is approved by Sagan.`,
               });
               navigate.push("/login");
               return;
@@ -158,7 +158,7 @@ export default function Home() {
             toast({
               variant: "destructive",
               title: "Authentication Error",
-              description: `Your account is not active. Soon your account will be active by our admin.`,
+              description: `Your account is pending approval. You will receive an email once it is approved by Sagan.`,
             });
             navigate.push("/login");
             return;

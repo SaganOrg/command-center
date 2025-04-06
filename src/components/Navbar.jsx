@@ -79,7 +79,6 @@ const privateMenuItems = [
 ];
 
 const privateAssistantItems = [
- 
   {
     href: "/projects",
     icon: <ListChecks className="h-4 w-4 mr-1" />,
@@ -94,7 +93,7 @@ const privateAssistantItems = [
     href: "/attachments",
     icon: <BookOpen className="h-4 w-4 mr-1" />,
     label: "Reference",
-  }
+  },
 ];
 
 const Navbar = () => {
@@ -102,10 +101,7 @@ const Navbar = () => {
   const navigate = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(false);
-
-  // Private menu items (visible only when logged in)
-
-  // Check authentication state on mount and listen for changes if Supabase is available
+  
   useEffect(() => {
     if (!supabase) {
       setIsLoggedIn(false);
@@ -136,14 +132,14 @@ const Navbar = () => {
         setIsLoggedIn(!!session);
         if (session) {
           supabase
-          .from("users")
-          .select("*")
-          .eq("id", session?.user.id)
-          .then((data, error) => {
-            if (error) throw error;
-            console.log(data, "alksjdflkasjdf laksjdflk asf");
-            setLoggedInUser(data.data[0]);
-          });
+            .from("users")
+            .select("*")
+            .eq("id", session?.user.id)
+            .then((data, error) => {
+              if (error) throw error;
+              console.log(data, "alksjdflkasjdf laksjdflk asf");
+              setLoggedInUser(data.data[0]);
+            });
         }
       }
     );
@@ -178,7 +174,8 @@ const Navbar = () => {
         </Link>
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
-          {isLoggedIn && loggedInUser?.role==="admin" &&
+            {isLoggedIn &&
+              loggedInUser?.role === "admin" &&
               adminMenu.map((item) => (
                 <Button
                   key={item.href}
@@ -198,7 +195,8 @@ const Navbar = () => {
                 </Button>
               ))}
             {/* Private menu items (visible only when logged in) */}
-            {isLoggedIn && loggedInUser?.role==="executive" &&
+            {isLoggedIn &&
+              loggedInUser?.role === "executive" &&
               privateMenuItems.map((item) => (
                 <Button
                   key={item.href}
@@ -217,8 +215,9 @@ const Navbar = () => {
                   </Link>
                 </Button>
               ))}
-            
-              {isLoggedIn && loggedInUser?.role==="assistant" &&
+
+            {isLoggedIn &&
+              loggedInUser?.role === "assistant" &&
               privateAssistantItems.map((item) => (
                 <Button
                   key={item.href}
@@ -239,24 +238,29 @@ const Navbar = () => {
               ))}
           </div>
           {/* Public Login button (converts to Logout when logged in) */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={isLoggedIn ? handleLogout : handleLogin}
-            className="flex items-center mx-2"
-          >
-            {isLoggedIn ? (
-              <>
-                <LogOut className="h-4 w-4 mr-1" />
-                <span>Logout</span>
-              </>
-            ) : (
-              <>
+          {isLoggedIn && loggedInUser?.role ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center mx-2"
+            >
+              <LogOut className="h-4 w-4 mr-1" />
+              <span>Logout</span>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center mx-2"
+            >
+              <Link href="/login" className="flex justify-center items-center">
                 <LogIn className="h-4 w-4 mr-1" />
                 <span>Login / Signup</span>
-              </>
-            )}
-          </Button>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </nav>
