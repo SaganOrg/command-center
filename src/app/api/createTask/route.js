@@ -14,18 +14,6 @@ export async function POST(request) {
     // Parse the request body
       const newTask = await request.json();
       const id = newTask.userId;
-
-    // Authenticate user
-    // const {
-    //   data: { user },
-    //   error: userError,
-    // } = await supabase.auth.getUser();
-    // if (userError) {
-    //   return NextResponse.json(
-    //     { error: userError.message },
-    //     { status: 401 }
-    //   );
-      // }
       
       const isValidUuid = (str) => {
         const uuidRegex =
@@ -36,7 +24,7 @@ export async function POST(request) {
       if (!id || !isValidUuid(id)) {
         return NextResponse.json(
             { error: "userId is not valid" },
-            { status: 500 }
+            { status: 400 }
           );
       }
   
@@ -49,7 +37,7 @@ export async function POST(request) {
     if (publicUserError) {
       return NextResponse.json(
         { error: publicUserError.message },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
@@ -103,7 +91,7 @@ export async function POST(request) {
     if (error) {
       return NextResponse.json(
         { error: error.message },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
@@ -115,7 +103,7 @@ export async function POST(request) {
     console.error('Error creating task:', error);
     return NextResponse.json(
       { error: 'Failed to create project' },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

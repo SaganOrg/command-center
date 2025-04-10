@@ -92,27 +92,41 @@ const Voice = () => {
   }, []);
 
   const startRecording = async () => {
-    if (userRole.role !== "executive") {
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: "Voice recording is only available for executives.",
-      });
-      return;
-    }
-
-    if (userRole.assistant_id === null) {
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description:
-          "Please add assistant first. Redirecting to settings page ...",
-      });
-      router.push("/settings");
-      return;
-    }
-
     try {
+      // Fetch user role client-side for initial checks
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const { data: publicUser, error: publicUserError } = await supabase
+        .from("users")
+        .select("role, assistant_id")
+        .eq("id", user.id)
+        .single();
+      if (publicUserError) throw publicUserError;
+
+      if (publicUser.role !== "executive") {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Voice recording is only available for executives.",
+        });
+        return;
+      }
+
+      if (publicUser.assistant_id === null) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description:
+            "Please add assistant first. Redirecting to settings page ...",
+        });
+        router.push("/settings");
+        return;
+      }
+
       audioChunksRef.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream, {
@@ -130,17 +144,7 @@ const Voice = () => {
           type: "audio/webm",
         });
         setRecordingStatus("recorded");
-
-        if (openai) {
-          transcribeAudio(audioBlob);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Transcription unavailable",
-            description:
-              "OpenAI API key is missing. Transcription and title generation are disabled.",
-          });
-        }
+        transcribeAudio(audioBlob); // Call API here
       };
 
       mediaRecorderRef.current.start();
@@ -152,20 +156,10 @@ const Voice = () => {
         description: "Speak clearly into your microphone",
       });
 
-      // Automatically stop after 10 seconds
+      // Automatically stop after 45 seconds
       const timeoutId = setTimeout(() => {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream
-          .getTracks()
-          .forEach((track) => track.stop());
-        setIsRecording(false);
-
-        toast({
-          title: "Recording stopped",
-          description: "Processing your audio...",
-        });
-        // }
-        console.log("calling it after 10 seconds");
+        stopRecording();
+        console.log("Auto-stopped after 45 seconds");
       }, 45000);
 
       // Clean up timeout if recording stops manually
@@ -208,88 +202,63 @@ const Voice = () => {
   };
 
   const transcribeAudio = async (audioBlob) => {
-    if (!openai) {
-      toast({
-        variant: "destructive",
-        title: "Transcription unavailable",
-        description:
-          "OpenAI API key is missing. Transcription and title generation are disabled.",
-      });
-      return;
-    }
-
     setIsTranscribing(true);
     try {
-      const audioFile = new File([audioBlob], "recording.webm", {
-        type: "audio/webm",
-      });
-
-      const transcriptionResponse = await openai.audio.transcriptions.create({
-        file: audioFile,
-        model: "whisper-1", 
-      });
-
-      const transcribedText = transcriptionResponse.text;
-      setTranscription(transcribedText);
-
-      // Generate title using OpenAI 3.5 model
-      const titleResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a helpful assistant that generates concise task titles based on provided text.",
-          },
-          {
-            role: "user",
-            content: `In Five Words or Less, Generate a Title for this Task based on this transcription: ${transcribedText}`,
-          },
-        ],
-        max_tokens: 10,
-      });
-
-      const generatedTitle = titleResponse.choices[0].message.content.trim();
-
-      // Add task to Supabase
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
       if (userError || !user) {
-        throw new Error("Authentication failed");
+        throw new Error("Failed to authenticate user");
       }
 
-      if (userRole.role === "executive") {
-        const { error } = await supabase.from("tasks").insert({
-          title: generatedTitle,
-          task: transcribedText,
-          created_at: new Date().toISOString(),
-          created_by: userRole.id,
-          assigned_to: userRole.assistant_id,
-          status: "inbox",
-        });
+      // Prepare FormData to send audio to API
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("userId", user.id);
 
-        if (error) throw error;
+      // Call the API
+      const response = await fetch("/api/voice", {
+        method: "POST",
+        body: formData,
+      });
 
-        toast({
-          title: "Task Added",
-          description:
-            "Your voice note has been transcribed and added to your project board.",
-        });
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (
+          result.error ===
+          "Please add assistant first. Redirecting to settings page ..."
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Access Denied",
+            description: result.error,
+          });
+          router.push("/settings");
+          return;
+        }
+        throw new Error(result.error || "Failed to process audio");
       }
-    
 
+      // Update UI with results
+      setTranscription(result.transcription);
+      toast({
+        title: "Task Added",
+        description:
+          "Your voice note has been transcribed and added to your project board.",
+      });
+
+      // Reset states
       setTranscription(null);
       setRecordingStatus("idle");
     } catch (error) {
-      console.error("Transcription or task creation error:", error);
+      console.error("Error in transcription or task creation:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description:
-          error.message ||
-          "Failed to transcribe or add task. Please try again.",
+          error.message || "Failed to transcribe or add task. Please try again.",
       });
     } finally {
       setIsTranscribing(false);
