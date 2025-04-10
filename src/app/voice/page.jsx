@@ -9,7 +9,6 @@ import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-// Initialize OpenAI client with environment variable safely
 const openai = (() => {
   try {
     const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
@@ -227,7 +226,7 @@ const Voice = () => {
 
       const transcriptionResponse = await openai.audio.transcriptions.create({
         file: audioFile,
-        model: "whisper-1",
+        model: "whisper-1", 
       });
 
       const transcribedText = transcriptionResponse.text;
@@ -326,7 +325,7 @@ const Voice = () => {
 
           <div className="relative mb-8">
             <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
-              <div
+              <div 
                 className={`w-24 h-24 rounded-full flex items-center justify-center transition-colors
                     ${isRecording ? "bg-red-600" : "bg-[#2D3B22]"}
                     ${isTranscribing ? "animate-pulse" : ""}`}
@@ -387,4 +386,4 @@ const Voice = () => {
   );
 };
 
-export default Voice;
+export default Voice; 

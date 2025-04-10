@@ -382,6 +382,85 @@ const Projects = () => {
     setIsNewTaskDialogOpen(true);
   };
 
+  // const handleCreateTask = async (newTask) => {
+  //   try {
+  //     setIsLoading(true);
+  //     const {
+  //       data: { user },
+  //       error: userError,
+  //     } = await supabase.auth.getUser();
+  //     if (userError) throw userError;
+
+  //     const { data: publicUser, error: publicUserError } = await supabase
+  //       .from("users")
+  //       .select("*")
+  //       .eq("id", user.id);
+  //     if (publicUserError) throw publicUserError;
+
+  //     let taskToAdd;
+  //     if (publicUser[0].role === "executive") {
+  //       if (publicUser[0].assistant_id === null) {
+  //         toast({
+  //           title: "Error",
+  //           description:
+  //             "Please create assistant first. Redirecting to settings page....",
+  //           variant: "destructive",
+  //         });
+  //         setIsNewTaskDialogOpen(false);
+  //         router.push("/settings");
+  //         return;
+  //       }
+  //       taskToAdd = {
+  //         title: newTask.title || "Untitled Project",
+  //         task: newTask.task || "",
+  //         status: newTask.status || newTaskStatus,
+  //         labels: "",
+  //         attachments: "",
+  //         created_by: user.id,
+  //         assigned_to: publicUser[0]?.assistant_id || null,
+  //         due_date: newTask.due_date || format(new Date(), "yyyy-MM-dd"),
+  //         purpose: newTask.purpose || "",
+  //         end_result: newTask.end_result || "",
+  //       };
+  //     } else if (publicUser[0].role === "assistant") {
+  //       taskToAdd = {
+  //         title: newTask.title || "Untitled Project",
+  //         task: newTask.task || "",
+  //         status: newTask.status || newTaskStatus,
+  //         labels: "",
+  //         attachments: "",
+  //         created_by: publicUser[0].executive_id,
+  //         assigned_to: user.id,
+  //         due_date: newTask.due_date || format(new Date(), "yyyy-MM-dd"),
+  //         purpose: newTask.purpose || "",
+  //         end_result: newTask.end_result || "",
+  //       };
+  //     }
+
+  //     const { data, error } = await supabase
+  //       .from("tasks")
+  //       .insert([taskToAdd])
+  //       .select();
+  //     if (error) throw error;
+
+  //     setTasks((prev) => [...prev, data[0]]);
+  //     setIsNewTaskDialogOpen(false);
+  //     toast({
+  //       title: "Project created",
+  //       description: "Your new project has been created.",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error creating task:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to create project",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleCreateTask = async (newTask) => {
     try {
       setIsLoading(true);
@@ -390,77 +469,59 @@ const Projects = () => {
         error: userError,
       } = await supabase.auth.getUser();
       if (userError) throw userError;
-
-      const { data: publicUser, error: publicUserError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id);
-      if (publicUserError) throw publicUserError;
-
-      let taskToAdd;
-      if (publicUser[0].role === "executive") {
-        if (publicUser[0].assistant_id === null) {
+  
+      // Create a new task object including the user.id
+      const taskWithUserId = {
+        ...newTask, // Spread the existing newTask properties
+        userId: user.id, // Add user.id as a new property
+      };
+  
+      // Make POST request to the API with the updated task object
+      const response = await fetch('/api/createTask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskWithUserId), // Use the updated object
+      });
+  
+      const result = await response.json();
+  
+      if (!response.ok) {
+        if (
+          result.error ===
+          'Please create assistant first. Redirecting to settings page....'
+        ) {
           toast({
-            title: "Error",
-            description:
-              "Please create assistant first. Redirecting to settings page....",
-            variant: "destructive",
+            title: 'Error',
+            description: result.error,
+            variant: 'destructive',
           });
           setIsNewTaskDialogOpen(false);
-          router.push("/settings");
+          router.push('/settings');
           return;
         }
-        taskToAdd = {
-          title: newTask.title || "Untitled Project",
-          task: newTask.task || "",
-          status: newTask.status || newTaskStatus,
-          labels: "",
-          attachments: "",
-          created_by: user.id,
-          assigned_to: publicUser[0]?.assistant_id || null,
-          due_date: newTask.due_date || format(new Date(), "yyyy-MM-dd"),
-          purpose: newTask.purpose || "",
-          end_result: newTask.end_result || "",
-        };
-      } else if (publicUser[0].role === "assistant") {
-        taskToAdd = {
-          title: newTask.title || "Untitled Project",
-          task: newTask.task || "",
-          status: newTask.status || newTaskStatus,
-          labels: "",
-          attachments: "",
-          created_by: publicUser[0].executive_id,
-          assigned_to: user.id,
-          due_date: newTask.due_date || format(new Date(), "yyyy-MM-dd"),
-          purpose: newTask.purpose || "",
-          end_result: newTask.end_result || "",
-        };
+        throw new Error(result.error || 'Failed to create project');
       }
-
-      const { data, error } = await supabase
-        .from("tasks")
-        .insert([taskToAdd])
-        .select();
-      if (error) throw error;
-
-      setTasks((prev) => [...prev, data[0]]);
+  
+      // Update tasks state with the new task from the API
+      setTasks((prev) => [...prev, result.task]);
       setIsNewTaskDialogOpen(false);
       toast({
-        title: "Project created",
-        description: "Your new project has been created.",
+        title: 'Project created',
+        description: 'Your new project has been created.',
       });
     } catch (error) {
-      console.error("Error creating task:", error);
+      console.error('Error creating task:', error);
       toast({
-        title: "Error",
-        description: "Failed to create project",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create project',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleAddComment = async (taskId, comment) => {
     try {
       setIsLoading(true);

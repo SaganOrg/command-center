@@ -250,14 +250,14 @@ const Settings = () => {
                     <span>{assistant.email}</span>
                   </div>
                 </div>
-                <Button
+                {/* <Button
                   variant="outline"
                   className="flex items-center gap-2"
                   // onClick={handleChangeAssistant}
                 >
                   <Edit className="h-4 w-4" />
                   Change Assistant
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </>
