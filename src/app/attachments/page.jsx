@@ -196,9 +196,9 @@ const Library = () => {
       .order("updated_at", { ascending: false });
 
     if (userRole === "executive") {
-      query = query.eq("user_id", userId);
-    } else if (userRole === "assistant" && userId) {
-      query = query.eq("user_id", userId);
+      query = query.eq("executive_id", userData?.id);
+    } else if (userRole === "assistant") {
+      query = query.eq("assistant_id", userData?.id);
     }
 
     const { data, error } = await query;
@@ -215,7 +215,9 @@ const Library = () => {
 
     const items = data.map((item) => ({
       id: item.id,
-      user_id: item.user_id,
+      // user_id: item.user_id,
+      executive_id: item.executive_id,
+      assistant_id:item.assistant_id,
       title: item.title,
       description: item.description || "",
       content: item.content || "",
@@ -322,11 +324,13 @@ const Library = () => {
       data.type === "database"
         ? { headers: tableHeaders, rows: tableRows }
         : null;
-
-    const { data: itemData, error: itemError } = await supabase
+    
+    if (userData?.role === "executive") {
+      const { data: itemData, error: itemError } = await supabase
       .from("reference_items")
       .insert({
-        user_id: userId,
+        assistant_id:userData?.assistant_id,
+executive_id:userData?.id,
         title: data.title,
         description: data.description,
         content: data.content,
@@ -374,6 +378,62 @@ const Library = () => {
     }
 
     return itemData;
+    }else if (userData?.role === "assistant") {
+      const { data: itemData, error: itemError } = await supabase
+      .from("reference_items")
+      .insert({
+        assistant_id:userData?.id,
+executive_id:userData?.executive_id,
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        type: data.type,
+        image_url: data.type === "image" ? data.imageUrl : null,
+        table_data: tableData,
+      })
+      .select()
+      .single();
+
+    if (itemError) throw itemError;
+
+    // Add tags
+    const tagIds = await Promise.all(
+      data.tags.map((tag) => getOrCreateTag(tag))
+    );
+    const tagRelations = tagIds
+      .filter((id) => id)
+      .map((tagId) => ({
+        reference_item_id: itemData.id,
+        tag_id: tagId,
+      }));
+
+    if (tagRelations.length > 0) {
+      const { error: tagError } = await supabase
+        .from("reference_item_tags")
+        .insert(tagRelations);
+      if (tagError) throw tagError;
+    }
+
+    // Add attachments
+    if (data.attachments.length > 0) {
+      const attachmentsToInsert = data.attachments.map((att) => ({
+        reference_item_id: itemData.id,
+        name: att.name,
+        size: att.size,
+        type: att.type,
+        url: att.url,
+        storage_path: att.storagePath, // Add storage path to database
+      }));
+      const { error: attError } = await supabase
+        .from("attachments")
+        .insert(attachmentsToInsert);
+      if (attError) throw attError;
+    }
+    return itemData;
+    
+    } 
+
+    
   };
 
   // Update reference item
@@ -397,7 +457,7 @@ const Library = () => {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .eq("user_id", userId);
+      // .eq("user_id", userId);
 
     if (itemError) throw itemError;
 
