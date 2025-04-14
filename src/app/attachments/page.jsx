@@ -90,6 +90,7 @@ const Library = () => {
   const [userId, setUserId] = useState(null);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   const router = useRouter();
 
@@ -117,6 +118,8 @@ const Library = () => {
           .select("*")
           .eq("id", user.id);
         if (publicError) throw publicError;
+
+        setUserData(publicUser[0]);
 
         setUserRole(publicUser[0].role || null);
         if (publicUser[0].role === "assistant") {
@@ -237,10 +240,11 @@ const Library = () => {
 
   // Fetch tags
   const fetchTags = async () => {
-    const { data, error } = await supabase
-      .from("tags")
-      .select("*")
-      .order("name", { ascending: true });
+    if (userData?.role === "executive") {
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+       .eq('executive_id', userData?.id);
 
     if (error) {
       console.error("Error fetching tags:", error);
@@ -252,6 +256,24 @@ const Library = () => {
     } else {
       setAvailableTags(data || []);
     }
+    } else if (userData?.role === "assistant") {
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+        .eq('assistant_id', userData?.id);
+
+    if (error) {
+      console.error("Error fetching tags:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load tags",
+      });
+    } else {
+      setAvailableTags(data || []);
+    }
+    }
+   
   };
 
   // Create or get tag
@@ -259,9 +281,10 @@ const Library = () => {
     const existingTag = availableTags.find((t) => t.name === tagName);
     if (existingTag) return existingTag.id;
 
-    const { data, error } = await supabase
+    if (userData?.role === "executive") {
+      const { data, error } = await supabase
       .from("tags")
-      .insert({ name: tagName })
+      .insert({ name: tagName, executive_id:userData?.id, assistant_id:userData?.assistant_id })
       .select()
       .single();
 
@@ -272,6 +295,23 @@ const Library = () => {
 
     setAvailableTags((prev) => [...prev, data]);
     return data.id;
+    }else if (userData?.role === "assistant") {
+      const { data, error } = await supabase
+      .from("tags")
+      .insert({ name: tagName, assistant_id:userData?.id, executive_id:userData?.executive_id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating tag:", error);
+      return null;
+    }
+
+    setAvailableTags((prev) => [...prev, data]);
+    return data.id;
+    }
+
+   
   };
 
   // Create reference item
