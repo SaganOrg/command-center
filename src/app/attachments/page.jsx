@@ -597,25 +597,6 @@ const Library = () => {
     setIsNewItemDialogOpen(true);
   };
 
-  // const handleFileUpload = (e) => {
-  //   const files = e.target.files;
-  //   if (!files || files.length === 0) return;
-
-  //   const newAttachments= Array.from(files).map(
-  //     (file) => ({
-  //       id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-  //       name: file.name,
-  //       size: file.size,
-  //       type: file.type,
-  //       url: URL.createObjectURL(file),
-  //     })
-  //   );
-
-  //   const currentAttachments = form.getValues("attachments") || [];
-  //   form.setValue("attachments", [...currentAttachments, ...newAttachments]);
-  //   e.target.value = "";
-  // };
-
   const handleFileUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -1106,23 +1087,25 @@ const Library = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Attachments</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        multiple
-                        onChange={handleFileUpload}
-                        disabled={isLoading}
-                        className="disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          multiple
+                          onChange={handleFileUpload}
+                          disabled={isLoading}
+                          className="disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </FormControl>
                       {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
-              <span className="text-sm text-gray-600 animate-pulse">
-                Processing...
-              </span>
-            </div>
-          )}
-                    </FormControl>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
+                          <span className="text-sm text-gray-600 animate-pulse">
+                            Processing...
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <div className="mt-2 space-y-2">
                       {field.value?.map((att) => (
                         <div
@@ -1281,10 +1264,10 @@ const Library = () => {
                 </div>
               )}
               <DialogFooter>
-  <Button type="submit" disabled={isLoading}>
-    {isLoading ? "Saving..." : "Save reference"}
-  </Button>
-</DialogFooter>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Saving..." : "Save reference"}
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>
@@ -1409,23 +1392,25 @@ const Library = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Attachments</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        multiple
-                        onChange={handleFileUpload}
-                        disabled={isLoading}
-                        className="disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          multiple
+                          onChange={handleFileUpload}
+                          disabled={isLoading}
+                          className="disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </FormControl>
                       {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
-              <span className="text-sm text-gray-600 animate-pulse">
-                Processing...
-              </span>
-            </div>
-          )}
-                    </FormControl>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded">
+                          <span className="text-sm text-gray-600 animate-pulse">
+                            Processing...
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <div className="mt-2 space-y-2">
                       {field.value?.map((att) => (
                         <div
@@ -1439,6 +1424,7 @@ const Library = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => removeAttachment(att.id)}
+                            disabled={isLoading}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -1583,10 +1569,10 @@ const Library = () => {
                 </div>
               )}
               <DialogFooter>
-  <Button type="submit" disabled={isLoading}>
-    {isLoading ? "Updating..." : "Update reference"}
-  </Button>
-</DialogFooter>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Updating..." : "Update reference"}
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>
@@ -1893,28 +1879,41 @@ const Library = () => {
                                             variant="outline"
                                             size="sm"
                                             onClick={async () => {
-                try {
-                  const response = await fetch(attachment.url);
-                  if (!response.ok) throw new Error("Failed to fetch file");
+                                              try {
+                                                const response = await fetch(
+                                                  attachment.url
+                                                );
+                                                if (!response.ok)
+                                                  throw new Error(
+                                                    "Failed to fetch file"
+                                                  );
 
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.href = url;
-                  link.download = attachment.name; // Set the file name for download
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  window.URL.revokeObjectURL(url); // Clean up
-                } catch (error) {
-                  console.error("Download error:", error);
-                  toast({
-                    variant: "destructive",
-                    title: "Download Error",
-                    description: `Failed to download ${attachment.name}`,
-                  });
-                }
-              }}
+                                                const blob =
+                                                  await response.blob();
+                                                const url =
+                                                  window.URL.createObjectURL(
+                                                    blob
+                                                  );
+                                                const link =
+                                                  document.createElement("a");
+                                                link.href = url;
+                                                link.download = attachment.name; // Set the file name for download
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                window.URL.revokeObjectURL(url); // Clean up
+                                              } catch (error) {
+                                                console.error(
+                                                  "Download error:",
+                                                  error
+                                                );
+                                                toast({
+                                                  variant: "destructive",
+                                                  title: "Download Error",
+                                                  description: `Failed to download ${attachment.name}`,
+                                                });
+                                              }
+                                            }}
                                           >
                                             <Download className="h-4 w-4 mr-1" />{" "}
                                             Download
@@ -1948,7 +1947,9 @@ const Library = () => {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    Cancel
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleDeleteItem(item.id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
