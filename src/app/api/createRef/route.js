@@ -87,7 +87,8 @@ export async function POST(request) {
       );
     }
 
-    const refId = taskData[0].id; // Assuming the table returns an 'id' field
+    const refId = taskData[0]?.id; // Assuming the table returns an 'id' field
+
 
     // Insert tags into reference-tags table
     if (tags.length > 0) {
@@ -99,7 +100,7 @@ export async function POST(request) {
       
       const { error: tagError } = await supabase
         .from('reference_item_tags')
-        .insert(tagInserts);
+        .insert(tagInserts).select();
         
       if (tagError) {
         return NextResponse.json(
