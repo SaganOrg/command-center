@@ -135,7 +135,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating task:', error);
     return NextResponse.json(
-      { error: 'Failed to create project' },
+      { error: 'Failed to create ref' },
       { status: 400 }
     );
   }
