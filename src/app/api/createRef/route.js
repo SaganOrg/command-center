@@ -130,7 +130,7 @@ export async function POST(request) {
     }
 
     return NextResponse.json(
-      { task: taskData[0] },
+      { task: taskData[0] , tags:tags },
       { status: 201 }
     );
   } catch (error) {
