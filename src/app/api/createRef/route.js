@@ -159,7 +159,7 @@ export async function PATCH(request) {
       );
     }
 
-    if (!taskId || !isValidUuid(taskId)) {
+    if (!taskId) {
       return NextResponse.json(
         { error: "taskId is not valid" },
         { status: 400 }
