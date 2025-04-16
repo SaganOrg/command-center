@@ -163,7 +163,7 @@ const Reports = () => {
       let query = supabase
         .from("users")
         .select("*")
-        .in("role", ["executive", "admin"]);
+        .in("role", ["executive", "admin", "assistant"]);
 
       if (executiveId) {
         query = query.or(`executive_id.eq.${executiveId}`);
