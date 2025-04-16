@@ -89,16 +89,16 @@ const Login = () => {
     }
     }
 
-    const role = userData[0].role;
-    if (role === "executive") {
-      if (userData[0].assistant_id === null) {
+
+    if (userData[0]?.role === "executive") {
+      if (userData[0]?.assistant_id === null) {
         navigate.push("/settings");
         return;
       }
       navigate.push("/voice");
-    } else if (role === "assistant") {
+    } else if (userData[0]?.role === "assistant") {
       navigate.push("/projects");
-    } else if(role==="admin") {
+    } else if(userData[0]?.role==="admin") {
       navigate.push("/admin")
     }
     setIsLoading(false);

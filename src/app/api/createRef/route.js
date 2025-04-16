@@ -331,7 +331,7 @@ export async function PATCH(request) {
   } catch (error) {
     console.error('Error updating task:', error);
     return NextResponse.json(
-      { error: 'Failed to update task' },
+      { error: 'Failed to update task', },
       { status: 400 }
     );
   }
