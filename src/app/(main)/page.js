@@ -48,159 +48,88 @@ export default function Home() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth event:", event, "Session:", session);
-
         if (session?.user) {
-          // User has signed in; update the users table
-          const { data, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("id", session.user.id);
-
-          if (error) {
+          await handleUserCheck(session.user);
+        }
+      }
+    );
+  
+    // Check user on initial load
+    const checkInitialUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await handleUserCheck(user);
+      } else {
+        // router.push("/login");
+      }
+    };
+  
+    // Handle user check and routing logic
+    const handleUserCheck = async (user) => {
+      try {
+        // Check if user exists in users table
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .single(); // Use single() to expect one row or none
+  
+        if (error && error.code !== "PGRST116") { // PGRST116 is "no rows found"
+          throw new Error("Error checking user");
+        }
+  
+        if (data) {
+          // User exists, check status and redirect
+          if (data.status === "pending" || data.status === "rejected") {
             await supabase.auth.signOut();
             toast({
               variant: "destructive",
               title: "Authentication Error",
-              description: "There is an error. Please try again. ",
+              description: "Your account is pending approval. You will receive an email once approved.",
             });
             router.push("/login");
-          }
-
-          if (data[0].status === "pending" || data[0].status === "rejected") {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: `Could not verify user. Please log in again. ${error.message}`,
-              });
-              console.error("Logout error:", error.message);
-            } else {
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: `Your account is pending approval. You will receive an email once it is approved by Sagan.`,
-              });
-              navigate.push("/login");
-              return;
-            }
-          }
-
-          if (data.length > 0) {
-            if (data[0].role === "executive") {
-              if (data[0].assistant_id === null) {
-                router.push("/settings");
-              } else {
-                router.push("/voice");
-              }
-            } else {
-              router.push("/projects");
-            }
-          } else {
-            const { error: insertError } = await supabase.from("users").insert({
-              id: session?.user.id, // Use the Supabase auth user ID
-              email: session?.user.email,
-              full_name:
-                session?.user.user_metadata?.full_name ||
-                session?.user.email.split("@")[0],
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              role: "executive",
-              status: "pending",
-            });
-
-            if (insertError) {
-              console.error(
-                "Error inserting user into users table:",
-                insertError
-              );
-            } else {
-              router.push("/settings");
-              console.log("User added to users table:", user.id);
-            }
-          }
-        }
-      }
-    );
-
-    // Check if the user is already signed in on page load
-    const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        // User has signed in; update the users table
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", user.id);
-
-        if (error) {
-          await supabase.auth.signOut();
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: `There is an error. Please try again later. `,
-          });
-          router.push("/login");
-        }
-
-        if (data[0].status === "pending" || data[0].status === "rejected") {
-          const { error } = await supabase.auth.signOut();
-          if (error) {
-            console.error("Logout error:", error.message);
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: `Your account is pending approval. You will receive an email once it is approved by Sagan.`,
-            });
-            navigate.push("/login");
             return;
           }
-        }
-
-        if (data.length > 0) {
-          if (data[0].role === "executive") {
-            if (data[0].assistant_id === null) {
-              router.push("/settings");
-            } else {
-              router.push("/voice");
-            }
+  
+          // Redirect based on role and assistant_id
+          if (data.role === "executive") {
+            router.push(data.assistant_id ? "/voice" : "/settings");
           } else {
             router.push("/projects");
           }
         } else {
+          // User doesn't exist, insert new user
           const { error: insertError } = await supabase.from("users").insert({
-            id: user.id, // Use the Supabase auth user ID
+            id: user.id,
             email: user.email,
-            full_name:
-              user.user_metadata?.full_name || user.email.split("@")[0],
+            full_name: user.user_metadata?.full_name || user.email.split("@")[0],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             role: "executive",
             status: "pending",
           });
-
+  
           if (insertError) {
-            console.error(
-              "Error inserting user into users table:",
-              insertError
-            );
-          } else {
-            router.push("/settings");
-            console.log("User added to users table:", user.id);
+            throw new Error("Error inserting user");
           }
+  
+          router.push("/settings");
         }
-      } else {
-        // router.push("/login");
+      } catch (error) {
+        console.error("Error:", error.message);
+        await supabase.auth.signOut();
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "An error occurred. Please try again.",
+        });
+        router.push("/login");
       }
     };
-
-    checkUser();
-
-    // Cleanup the listener on component unmount
+  
+    checkInitialUser();
+  
+    // Cleanup
     return () => {
       authListener.subscription.unsubscribe();
     };
