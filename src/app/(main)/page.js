@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import { ClipboardList, BookOpen, LayoutGrid, Mic } from "lucide-react";
-import FeatureCard from "../components/FeatureCard";
-import Hero from "../components/Hero";
-import AnimatedTransition from "../components/AnimatedTransition";
+import FeatureCard from "../../components/FeatureCard";
+import Hero from "../../components/Hero";
+import AnimatedTransition from "../../components/AnimatedTransition";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -56,8 +56,6 @@ export default function Home() {
             .from("users")
             .select("*")
             .eq("id", session.user.id);
-
-          console.log(data, "laksjdflkjasdf");
 
           if (error) {
             await supabase.auth.signOut();
@@ -138,8 +136,6 @@ export default function Home() {
           .select("*")
           .eq("id", user.id);
 
-        console.log(data, "laksjdflkjasdf");
-
         if (error) {
           await supabase.auth.signOut();
           toast({
@@ -198,7 +194,7 @@ export default function Home() {
           }
         }
       } else {
-        router.push("/login");
+        // router.push("/login");
       }
     };
 

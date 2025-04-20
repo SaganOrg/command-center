@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -101,45 +101,44 @@ const Navbar = () => {
   const navigate = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(false);
-  
+
   useEffect(() => {
-    if (!supabase) {
-      setIsLoggedIn(false);
-      return;
-    }
-
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session);
-      if (session) {
-        // setLoggedInUser(session.user.user_metadata);
-        supabase
-          .from("users")
-          .select("*")
-          .eq("id", session?.user.id)
-          .then((data, error) => {
-            if (error) throw error;
-            console.log(data, "alksjdflkasjdf laksjdflk asf");
-            setLoggedInUser(data.data[0]);
-          });
-      } else {
-      }
-    });
-
-    // Set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+    const checkSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         setIsLoggedIn(!!session);
         if (session) {
-          supabase
+          const { data, error } = await supabase
             .from("users")
             .select("*")
-            .eq("id", session?.user.id)
-            .then((data, error) => {
-              if (error) throw error;
-              console.log(data, "alksjdflkasjdf laksjdflk asf");
-              setLoggedInUser(data.data[0]);
-            });
+            .eq("id", session.user.id);
+          if (error) throw error;
+          setLoggedInUser(data[0]);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    };
+
+    checkSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(event, "event");
+        setIsLoggedIn(!!session);
+        if (session) {
+          try {
+            const { data, error } = await supabase
+              .from("users")
+              .select("*")
+              .eq("id", session.user.id);
+            if (error) throw error;
+            setLoggedInUser(data[0]);
+          } catch (error) {
+            console.error("Error fetching user:", error);
+          }
         }
       }
     );
@@ -160,10 +159,6 @@ const Navbar = () => {
     } else {
       navigate.push("/login");
     }
-  };
-
-  const handleLogin = () => {
-    navigate.push("/login");
   };
 
   return (

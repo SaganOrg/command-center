@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/toaster";
