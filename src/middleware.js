@@ -42,11 +42,11 @@ export async function middleware(request) {
     const { error } = await supabase.auth.getSession();
       if (error) {
         console.error("Error refreshing session:", error.message);
-        router.push("/login?error=auth_failed");
-        return;
+        NextResponse.redirect(new URL('/login', request.url));
+        return NextResponse.next();
       }
       // Redirect to the main app or desired page
-      router.push("/");
+      // router.push("/");
   }
 
   // Handle /login route for authenticated users
