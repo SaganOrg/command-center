@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/supabase-js";
 
 export default function AuthCallback() {
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      );
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
-
+   
     const handleCallback = async () => {
       // Refresh the session to ensure the token is stored
       const { error } = await supabase.auth.getSession();
