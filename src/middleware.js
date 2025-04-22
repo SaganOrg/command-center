@@ -39,11 +39,22 @@ export async function middleware(request) {
   }
 
   if (request.nextUrl.pathname === "/auth/callback") {
-    const { error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Error refreshing session:", error.message);
-      return NextResponse.redirect(new URL("/login", request.url));
+    const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  // if "next" is in param, use it as the redirect URL
+  const next = searchParams.get('next') ?? '/'
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+      return NextResponse.redirect(new URL("/", request.url));
     }
+  }
+    // const { error } = await supabase.auth.getSession();
+    // if (error) {
+    //   console.error("Error refreshing session:", error.message);
+    //   return NextResponse.redirect(new URL("/login", request.url));
+    // }
 
     // Redirect to the main app
     return NextResponse.redirect(new URL("/", request.url));
@@ -223,7 +234,7 @@ export const config = {
     '/admin',
     '/reports',
     '/attachments',
-    '/auth/callback',
+  
     // Exclude public routes
     '/((?!signup|api|_next/static|_next/image|favicon.ico).*)',
   ],
