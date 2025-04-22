@@ -1,31 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createSupabaseServerClient } from './lib/supabase-server';
 
 export async function middleware(request) {
-  const cookieStore = await cookies();
 
   // Initialize Supabase server client
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore setAll errors in Server Components
-          }
-        },
-      },
-    }
-  );
+  const supabase =await createSupabaseServerClient();
 
   // Get the session
   const {
