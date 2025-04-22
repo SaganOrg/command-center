@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 const openai = (() => {
   try {
@@ -33,7 +34,7 @@ const openai = (() => {
 const Voice = () => {
 
 
-  const supabase = createClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );

@@ -69,13 +69,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 const Library = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -84,7 +84,7 @@ const Library = () => {
     );
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);

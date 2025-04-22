@@ -29,15 +29,15 @@ import TaskForm from "@/components/projects/TaskForm";
 import TaskEditDialog from "@/components/projects/TaskEditDialog";
 import ColumnCarousel from "@/components/projects/ColumnCarousel";
 import ProjectsGrid from "@/components/projects/ProjectsGrid";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 
 const Projects = () => {
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [users, setUsers] = useState({});

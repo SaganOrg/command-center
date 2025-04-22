@@ -3,10 +3,11 @@ import React, { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 
 
 // Initialize Supabase client
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );

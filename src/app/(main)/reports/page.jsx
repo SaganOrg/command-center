@@ -4,16 +4,16 @@ import React, { useState, useEffect } from "react";
 import AnimatedTransition from "@/components/AnimatedTransition";
 import ReportForm from "@/components/ReportForm";
 import ReportHistory from "@/components/ReportHistory";
-import { createClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 // Initialize Supabase client
 
 
 const Reports = () => {
 
-  const supabase = createClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );

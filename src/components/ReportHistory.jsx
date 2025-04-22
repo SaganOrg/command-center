@@ -32,9 +32,10 @@ import {
 } from "@/components/ui/pagination";
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { createBrowserClient } from '@supabase/ssr';
 
 // Initialize Supabase client
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );

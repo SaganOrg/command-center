@@ -95,7 +95,7 @@ export default function Home() {
           if (data.role === "executive") {
             router.push(data.assistant_id ? "/voice" : "/settings");
           } else {
-            router.push("/projects");
+            // router.push("/projects");
           }
         } else {
           // User doesn't exist, insert new user

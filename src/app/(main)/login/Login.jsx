@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
-
+import { createBrowserClient } from "@supabase/ssr";
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
-const Login = () => {
-  const supabase = createClient(
+const LoginPage = ({ error }) => {
+  
+    console.log(error);
+  // const error = searchParams?.get("error")
+  // console.log(error)
+
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
@@ -32,12 +32,21 @@ const Login = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
-  const navigate = useRouter();
+  const router = useRouter();
+//   const searchParamss = useSearchParams();
 
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
 
+  useEffect(() => {
+    // const error = searchParamss.get("error");
+    if (error === "account_pending") {
+      setAuthError("Please wait until your account is approved by an admin");
+    } else if (error === "user_not_found") {
+      setAuthError("User not found. Please contact support.");
+    }
+  }, []);
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -59,52 +68,23 @@ const Login = () => {
       password: loginPassword,
     });
 
-    console.log(data);
+    console.log("Login response:", { session: data.session, user: data.user });
+    console.log("Cookies after login:", document.cookie);
+
     if (error) {
       setAuthError(error.message || "Login failed. Please try again.");
       setIsLoading(false);
       return;
     }
 
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", data.user.id);
+    // Clear localStorage to remove old session data
+    localStorage.removeItem(`sb-<your-project-id>-auth-token`);
 
-    if (userError) {
-      setAuthError(error.message || "Login failed. Please try again.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (userData[0].status === "pending"|| userData[0].status === "rejected") {
-      const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Logout error:", error.message);
-    } else {
-      // navigate.push("/login");
-      setAuthError("Please wait until your account is approved by one admin");
-      setIsLoading(false);
-      return;
-    }
-    }
-
-
-    if (userData[0]?.role === "executive") {
-      if (userData[0]?.assistant_id === null) {
-        navigate.push("/settings");
-        return;
-      }
-      navigate.push("/voice");
-    } else if (userData[0]?.role === "assistant") {
-      navigate.push("/projects");
-    } else if(userData[0]?.role==="admin") {
-      navigate.push("/admin")
-    }
+    router.push("/projects");
     setIsLoading(false);
   };
 
-   const handleSignupSubmit = async (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
@@ -144,7 +124,7 @@ const Login = () => {
           email: data.user.email,
           role: "executive",
           full_name: signupName,
-          status:"pending"
+          status: "pending",
         })
         .select();
 
@@ -155,13 +135,15 @@ const Login = () => {
       }
 
       const { error } = await supabase.auth.signOut();
-          if (error) {
-            console.error("Logout error:", error.message);
-          } else {
-            // navigate.push("/login");
-            setAuthError("Your account is pending approval. You will receive an email once it is approved by Sagan.");
-            setIsLogin(true);
-          }
+      if (error) {
+        console.error("Logout error:", error.message);
+      } else {
+        // navigate.push("/login");
+        setAuthError(
+          "Your account is pending approval. You will receive an email once it is approved by Sagan."
+        );
+        setIsLogin(true);
+      }
     }
 
     if (error) {
@@ -866,4 +848,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginPage;

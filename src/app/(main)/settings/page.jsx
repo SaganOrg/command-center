@@ -15,9 +15,10 @@ import { UserPlus, Mail, User, MailIcon, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 const Settings = () => {
-  const supabase = createClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
