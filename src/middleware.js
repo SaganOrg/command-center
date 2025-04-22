@@ -40,14 +40,13 @@ export async function middleware(request) {
 
   if (request.nextUrl.pathname === "/auth/callback") {
     const { error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error refreshing session:", error.message);
-        NextResponse.redirect(new URL('/login', request.url));
-        return NextResponse.next();
-      }
-      // Redirect to the main app or desired page
-    // router.push("/");
-    NextResponse.redirect(new URL('/'));
+    if (error) {
+      console.error("Error refreshing session:", error.message);
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Redirect to the main app
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Handle /login route for authenticated users
