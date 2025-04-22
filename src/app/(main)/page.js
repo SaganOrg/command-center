@@ -123,7 +123,7 @@ export default function Home() {
           title: "Authentication Error",
           description: "An error occurred. Please try again.",
         });
-        router.push("/login");
+        // router.push("/login");
       }
     };
   
