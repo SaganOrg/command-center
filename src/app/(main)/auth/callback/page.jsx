@@ -1,40 +1,33 @@
-import { createServerClient } from "@supabase/ssr";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+// app/auth/callback/page.jsx
+"use client";
 
-export default async function AuthCallback() {
-    const cookieStore = await cookies();
-  // Initialize Supabase server client
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore setAll errors in Server Components
-          }
-        },
-      },
-    }
-  );
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
-  // Refresh the session
-  const { error } = await supabase.auth.getSession();
+export default function AuthCallback() {
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      );
+  const router = useRouter();
 
-  if (error) {
-    console.error("Error refreshing session:", error.message);
-    // Redirect to login with error query parameter
-    return redirect("/login?error=auth_failed");
-  }
+  useEffect(() => {
+   
+    const handleCallback = async () => {
+      // Refresh the session to ensure the token is stored
+      const { error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error refreshing session:", error.message);
+        router.push("/login?error=auth_failed");
+        return;
+      }
+      // Redirect to the main app or desired page
+      router.push("/");
+    };
 
-  // Redirect to the main app
-  return redirect("/");
+    handleCallback();
+  }, [router]);
+
+  return <div>Loading...</div>;
 }
