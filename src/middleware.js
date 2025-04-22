@@ -38,6 +38,17 @@ export async function middleware(request) {
     console.error('Session error:', sessionError.message);
   }
 
+  if (request.nextUrl.pathname === "/auth/callback") {
+    const { error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error refreshing session:", error.message);
+        router.push("/login?error=auth_failed");
+        return;
+      }
+      // Redirect to the main app or desired page
+      router.push("/");
+  }
+
   // Handle /login route for authenticated users
   if (request.nextUrl.pathname === '/login') {
     if (session && !sessionError) {
@@ -212,6 +223,7 @@ export const config = {
     '/admin',
     '/reports',
     '/attachments',
+    '/auth/callback',
     // Exclude public routes
     '/((?!signup|api|_next/static|_next/image|favicon.ico).*)',
   ],
