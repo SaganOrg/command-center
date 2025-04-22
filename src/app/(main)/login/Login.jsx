@@ -212,7 +212,7 @@ const LoginPage = ({ error }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://commandcenter.getsagan.com/",
+        redirectTo: "https://commandcenter.getsagan.com/auth/callback",
       },
     });
     if (error) {
