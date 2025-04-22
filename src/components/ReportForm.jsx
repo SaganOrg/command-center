@@ -10,14 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from 'sonner';
 import { Send, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import { format, isAfter, isBefore, subDays, startOfDay, isEqual } from 'date-fns';
-import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
 // Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 const ReportForm = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -25,6 +21,11 @@ const ReportForm = () => {
     const parsed = parseInt(value);
     return isNaN(parsed) ? '5' : parsed.toString();
   };
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   const [formData, setFormData] = useState({
     date: today,

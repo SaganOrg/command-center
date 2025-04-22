@@ -30,15 +30,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { createClient } from '@supabase/supabase-js';
+
 import { toast } from 'sonner';
 import { createBrowserClient } from '@supabase/ssr';
 
 // Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 const ReportHistory= () => {
   const [selectedReport, setSelectedReport] = useState(null);
@@ -51,6 +48,11 @@ const ReportHistory= () => {
   
   const ITEMS_PER_PAGE = 5;
 
+  
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   // Fetch authenticated user ID and owner_id from user_metadata on mount
   useEffect(() => {
     const fetchUser = async () => {
