@@ -46,7 +46,8 @@ export async function middleware(request) {
         return NextResponse.next();
       }
       // Redirect to the main app or desired page
-      // router.push("/");
+    // router.push("/");
+    NextResponse.redirect(new URL('/'));
   }
 
   // Handle /login route for authenticated users
