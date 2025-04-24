@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createSupabaseServerClient } from './lib/supabase-server';
+import { updateSession } from './lib/middleware';
 
 export async function middleware(request) {
 
@@ -203,6 +204,7 @@ export async function middleware(request) {
 
   // Allow the request to proceed for non-protected routes
   console.log('Allowing request to proceed');
+  await updateSession(request)
   return NextResponse.next();
 }
 

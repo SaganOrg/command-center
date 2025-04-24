@@ -118,7 +118,7 @@ const TaskEditDialog = ({
               <Trash2 className="h-5 w-5" />
             </Button> */}
           </div>
-          <DialogDescription className="pt-2">
+          <div className="pt-2">
             <div className="flex items-center border-b">
               <div className="flex-1 flex space-x-2">
                 <button
@@ -160,7 +160,7 @@ const TaskEditDialog = ({
                 </Button>
               </div>
             </div>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
         <div className="py-4">

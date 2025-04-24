@@ -42,43 +42,12 @@ const privateAssistantItems = [
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  // const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState(null); // Adjust type based on your user schema
-  const [authError, setAuthError] = useState(null);
-
- const { toast } = useToast();
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Handle URL query parameters for errors
-    // const error = searchParams.get("error");
-    // if (error === "account_pending") {
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Access Denied",
-    //     description: "Please wait until your account is approved by an admin",
-    //   });
-    //   // setAuthError("Please wait until your account is approved by an admin");
-    //   setIsLoggedIn(false);
-    //   setLoggedInUser(null);
-    //   // Force client-side sign-out to clear stale session
-    //   supabase.auth.signOut().then(() => {
-    //     console.log("Client-side sign-out triggered due to pending/rejected status");
-    //   });
-    // } else if (error === "user_not_found") {
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Access Denied",
-    //     description: "User not found. Please contact support.",
-    //   });
-    //   // setAuthError("User not found. Please contact support.");
-    //   setIsLoggedIn(false);
-    //   setLoggedInUser(null);
-    // } else {
-    //   setAuthError(null); // Clear error if no relevant query param
-    // }
-
-    // Initial session check
     const checkSession = async () => {
       try {
         const {
@@ -107,7 +76,6 @@ const Navbar = () => {
             title: "Access Denied",
             description: "Please wait until your account is approved by an admin",
           });
-          // setAuthError("Please wait until your account is approved by an admin");
           router.push("/login?error=account_pending");
         } else {
           setIsLoggedIn(true);
@@ -122,21 +90,18 @@ const Navbar = () => {
           title: "Access Denied",
           description: "Authentication error. Please log in again.",
         });
-        // setAuthError("Authentication error. Please log in again.");
         router.push("/login");
       }
     };
 
     checkSession();
 
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth event:", event, "Session:", session ? "Found" : "Missing");
         if (event === "SIGNED_OUT") {
           setIsLoggedIn(false);
           setLoggedInUser(null);
-          setAuthError(null); // Clear error on manual sign-out
           if (pathname !== "/login") {
             router.push("/login");
           }
@@ -157,12 +122,10 @@ const Navbar = () => {
                 title: "Access Denied",
                 description: "Please wait until your account is approved by an admin",
               });
-              // setAuthError("Please wait until your account is approved by an admin");
               router.push("/login?error=account_pending");
             } else {
               setIsLoggedIn(true);
               setLoggedInUser(data);
-              setAuthError(null);
             }
           } catch (error) {
             console.error("Error fetching user:", error);
@@ -173,7 +136,6 @@ const Navbar = () => {
               title: "Access Denied",
               description: "User not found. Please contact support.",
             });
-            // setAuthError("User data error. Please log in again.");
             router.push("/login?error=user_not_found");
           }
         } else {
@@ -189,24 +151,33 @@ const Navbar = () => {
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, [pathname, router]);
+  }, [pathname, router, toast]);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
     try {
+      // Clear local storage explicitly
+      localStorage.removeItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`);
+      // Clear cookies if used
+      document.cookie = `sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
       setIsLoggedIn(false);
       setLoggedInUser(null);
-      setAuthError(null);
-      router.push("/login");
+      // Use full page redirect to ensure fresh state
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
       toast({
         variant: "destructive",
-        title: "Access Denied",
+        title: "Logout Failed",
         description: "Failed to log out. Please try again.",
       });
-      // setAuthError("Failed to log out. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -217,9 +188,6 @@ const Navbar = () => {
           Sagan Command Center
         </Link>
         <div className="flex items-center">
-          {/* {authError && (
-            <div className="text-red-500 mr-4">{authError}</div>
-          )} */}
           <div className="flex space-x-1 mr-4">
             {isLoggedIn && loggedInUser?.role === "admin" && (
               <>
@@ -291,9 +259,10 @@ const Navbar = () => {
               size="sm"
               onClick={handleLogout}
               className="flex items-center mx-2"
+              disabled={isLoggingOut}
             >
               <LogOut className="h-4 w-4 mr-1" />
-              <span>Logout</span>
+              <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
             </Button>
           ) : (
             <Button
