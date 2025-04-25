@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { loginWithEmail, signupWithEmail, loginWithGoogle, resetPassword } from './auth-actions';
+import { createBrowserClient } from '@supabase/ssr';
 
 const LoginPage = ({ error }) => {
   console.log(error);
@@ -154,8 +155,20 @@ const LoginPage = ({ error }) => {
     setAuthError(null);
 
     try {
-      await loginWithGoogle();
-      // Note: The actual redirect is handled by Supabase's OAuth flow
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'https://commandcenter.getsagan.com/api/auth/callback',
+          },
+        });
+      
+        if (error) {
+          throw new Error(error.message || 'Google signup failed.');
+        }
+    
+      
     } catch (error) {
       setAuthError(error.message || 'Google signup failed.');
       setIsLoading(false);

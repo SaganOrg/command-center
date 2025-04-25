@@ -81,21 +81,6 @@ async function signupWithEmail(email, password, name) {
 }
 
 // Initiate Google OAuth login
-async function loginWithGoogle() {
-  const supabase = createSupabaseClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://commandcenter.getsagan.com/auth/callback',
-    },
-  });
-
-  if (error) {
-    throw new Error(error.message || 'Google signup failed.');
-  }
-
-  return data;
-}
 
 // Reset password via email
 async function resetPassword(email) {
@@ -114,6 +99,6 @@ async function resetPassword(email) {
 export {
   loginWithEmail,
   signupWithEmail,
-  loginWithGoogle,
+
   resetPassword,
 };
