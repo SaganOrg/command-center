@@ -1,87 +1,72 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { createBrowserClient } from "@supabase/ssr";
-// Initialize Supabase client
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Mic, User, Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { loginWithEmail, signupWithEmail, loginWithGoogle, resetPassword } from './auth-actions';
 
 const LoginPage = ({ error }) => {
-  
-    console.log(error);
-  // const error = searchParams?.get("error")
-  // console.log(error)
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  console.log(error);
 
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotEmail, setForgotEmail] = useState('');
   const [resetMessage, setResetMessage] = useState(null);
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
 
   const router = useRouter();
-//   const searchParamss = useSearchParams();
 
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
 
   useEffect(() => {
-    // const error = searchParamss.get("error");
-    if (error === "account_pending") {
-      setAuthError("Please wait until your account is approved by an admin");
-    } else if (error === "user_not_found") {
-      setAuthError("User not found. Please contact support.");
+    if (error === 'account_pending') {
+      setAuthError('Please wait until your account is approved by an admin');
+    } else if (error === 'user_not_found') {
+      setAuthError('User not found. Please contact support.');
     }
-  }, []);
+  }, [error]);
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
 
     if (!isValidEmail(loginEmail)) {
-      setAuthError("Please enter a valid email address");
+      setAuthError('Please enter a valid email address');
       setIsLoading(false);
       return;
     }
     if (loginPassword.length < 6) {
-      setAuthError("Password must be at least 6 characters");
+      setAuthError('Password must be at least 6 characters');
       setIsLoading(false);
       return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    });
+    try {
+      const { session, user } = await loginWithEmail(loginEmail, loginPassword);
+      console.log('Login response:', { session, user });
+      console.log('Cookies after login:', document.cookie);
 
-    console.log("Login response:", { session: data.session, user: data.user });
-    console.log("Cookies after login:", document.cookie);
+      // Clear localStorage to remove old session data
+      localStorage.removeItem(`sb-<your-project-id>-auth-token`);
 
-    if (error) {
-      setAuthError(error.message || "Login failed. Please try again.");
+      router.push('/projects');
+    } catch (error) {
+      setAuthError(error.message || 'Login failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    // Clear localStorage to remove old session data
-    localStorage.removeItem(`sb-<your-project-id>-auth-token`);
-
-    router.push("/projects");
-    setIsLoading(false);
   };
 
   const handleSignupSubmit = async (e) => {
@@ -90,70 +75,35 @@ const LoginPage = ({ error }) => {
     setAuthError(null);
 
     if (signupName.length < 2) {
-      setAuthError("Name must be at least 2 characters");
+      setAuthError('Name must be at least 2 characters');
       setIsLoading(false);
       return;
     }
     if (!isValidEmail(signupEmail)) {
-      setAuthError("Please enter a valid email address");
+      setAuthError('Please enter a valid email address');
       setIsLoading(false);
       return;
     }
     if (signupPassword.length < 6) {
-      setAuthError("Password must be at least 6 characters");
+      setAuthError('Password must be at least 6 characters');
       setIsLoading(false);
       return;
     }
     if (signupPassword !== signupConfirmPassword) {
-      setAuthError("Passwords do not match");
+      setAuthError('Passwords do not match');
       setIsLoading(false);
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: signupEmail,
-      password: signupPassword,
-    });
-
-    if (data.user) {
-      const userId = data.user.id;
-      const { error: updateError } = await supabase
-        .from("users")
-        .insert({
-          id: userId,
-          email: data.user.email,
-          role: "executive",
-          full_name: signupName,
-          status: "pending",
-        })
-        .select();
-
-      if (updateError) {
-        setAuthError("Please try again later");
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Logout error:", error.message);
-      } else {
-        // navigate.push("/login");
-        setAuthError(
-          "Your account is pending approval. You will receive an email once it is approved by Sagan."
-        );
-        setIsLogin(true);
-      }
-    }
-
-    if (error) {
-      setAuthError(error.message || "Signup failed. Please try again.");
+    try {
+      const { message } = await signupWithEmail(signupEmail, signupPassword, signupName);
+      setAuthError(message);
+      setIsLogin(true);
+    } catch (error) {
+      setAuthError(error.message || 'Signup failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      return;
     }
-    // setAuthError("Signup success as an executive");
-    setIsLoading(false);
-    // navigate.push("/");
   };
 
   const handleForgotPasswordSubmit = async (e) => {
@@ -163,25 +113,19 @@ const LoginPage = ({ error }) => {
     setResetMessage(null);
 
     if (!isValidEmail(forgotEmail)) {
-      setAuthError("Please enter a valid email address");
+      setAuthError('Please enter a valid email address');
       setIsLoading(false);
       return;
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: "https://commandcenter.getsagan.com/reset-password",
-    });
-
-    if (error) {
-      setAuthError(
-        error.message || "Failed to send reset email. Please try again."
-      );
+    try {
+      const { message } = await resetPassword(forgotEmail);
+      setResetMessage(message);
+    } catch (error) {
+      setAuthError(error.message || 'Failed to send reset email. Please try again.');
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    setResetMessage("Password reset email sent! Check your inbox.");
-    setIsLoading(false);
   };
 
   const toggleAuthMode = () => {
@@ -189,108 +133,102 @@ const LoginPage = ({ error }) => {
     setShowForgotPassword(false);
     setAuthError(null);
     setResetMessage(null);
-    setLoginEmail("");
-    setLoginPassword("");
-    setSignupName("");
-    setSignupEmail("");
-    setSignupPassword("");
-    setSignupConfirmPassword("");
-    setForgotEmail("");
+    setLoginEmail('');
+    setLoginPassword('');
+    setSignupName('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setSignupConfirmPassword('');
+    setForgotEmail('');
   };
 
   const showForgotPasswordForm = () => {
     setShowForgotPassword(true);
     setAuthError(null);
     setResetMessage(null);
-    setForgotEmail("");
+    setForgotEmail('');
   };
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
     setAuthError(null);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://commandcenter.getsagan.com/auth/callback",
-      },
-    });
-    if (error) {
-      setAuthError(error.message || "Google signup failed.");
+    try {
+      await loginWithGoogle();
+      // Note: The actual redirect is handled by Supabase's OAuth flow
+    } catch (error) {
+      setAuthError(error.message || 'Google signup failed.');
       setIsLoading(false);
-      return;
     }
   };
 
   return (
     <div
       style={{
-        minHeight: "90vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "16px",
-        backgroundColor: "#f5f5f5",
+        minHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '16px',
+        backgroundColor: '#f5f5f5',
       }}
     >
-      <div style={{ width: "100%", maxWidth: "400px" }}>
-        <div style={{ textAlign: "center" }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center' }}>
           <div
             style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "8px",
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: '8px',
             }}
           >
-            <Mic style={{ width: "40px", height: "40px", color: "#007bff" }} />
+            <Mic style={{ width: '40px', height: '40px', color: '#007bff' }} />
           </div>
-          <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>
             Sagan Command Center
           </h1>
-          <p style={{ color: "#666", marginTop: "8px" }}>
+          <p style={{ color: '#666', marginTop: '8px' }}>
             Your mission control for productivity
           </p>
         </div>
 
         <div
           style={{
-            backgroundColor: "#fff",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            overflow: "hidden",
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ padding: "16px 24px", borderBottom: "1px solid #eee" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #eee' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>
               {showForgotPassword
-                ? "Reset Password"
+                ? 'Reset Password'
                 : isLogin
-                ? "Login"
-                : "Create Employee Account"}
+                ? 'Login'
+                : 'Create Employee Account'}
             </h2>
-            <p style={{ color: "#666", fontSize: "14px" }}>
+            <p style={{ color: '#666', fontSize: '14px' }}>
               {showForgotPassword
-                ? "Enter your email to reset your password"
+                ? 'Enter your email to reset your password'
                 : isLogin
-                ? "Enter your credentials to access your account"
-                : "Fill in your details to get started as an employee"}
+                ? 'Enter your credentials to access your account'
+                : 'Fill in your details to get started as an employee'}
             </p>
           </div>
 
-          <div style={{ padding: "24px" }}>
+          <div style={{ padding: '24px' }}>
             {authError && (
               <div
                 style={{
-                  backgroundColor: authError.includes("Check your email")
-                    ? "#d1fae5"
-                    : "#fee2e2",
-                  color: authError.includes("Check your email")
-                    ? "#16a34a"
-                    : "#dc2626",
-                  padding: "12px",
-                  borderRadius: "4px",
-                  marginBottom: "16px",
+                  backgroundColor: authError.includes('Check your email')
+                    ? '#d1fae5'
+                    : '#fee2e2',
+                  color: authError.includes('Check your email') ? '#16a34a' : '#dc2626',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  marginBottom: '16px',
                 }}
               >
                 {authError}
@@ -299,11 +237,11 @@ const LoginPage = ({ error }) => {
             {resetMessage && (
               <div
                 style={{
-                  backgroundColor: "#d1fae5",
-                  color: "#16a34a",
-                  padding: "12px",
-                  borderRadius: "4px",
-                  marginBottom: "16px",
+                  backgroundColor: '#d1fae5',
+                  color: '#16a34a',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  marginBottom: '16px',
                 }}
               >
                 {resetMessage}
@@ -314,29 +252,29 @@ const LoginPage = ({ error }) => {
               <form
                 onSubmit={handleForgotPasswordSubmit}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
                 }}
               >
-                <div style={{ position: "relative" }}>
+                <div style={{ position: 'relative' }}>
                   <label
                     style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "500",
+                      display: 'block',
+                      marginBottom: '4px',
+                      fontWeight: '500',
                     }}
                   >
                     Email
                   </label>
                   <Mail
                     style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "36px",
-                      width: "16px",
-                      height: "16px",
-                      color: "#666",
+                      position: 'absolute',
+                      left: '12px',
+                      top: '36px',
+                      width: '16px',
+                      height: '16px',
+                      color: '#666',
                     }}
                   />
                   <input
@@ -345,11 +283,11 @@ const LoginPage = ({ error }) => {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     style={{
-                      width: "100%",
-                      padding: "8px 8px 8px 36px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
+                      width: '100%',
+                      padding: '8px 8px 8px 36px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px',
                     }}
                   />
                 </div>
@@ -357,23 +295,23 @@ const LoginPage = ({ error }) => {
                   type="submit"
                   disabled={isLoading}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px",
-                    width: "100%",
-                    padding: "10px",
-                    backgroundColor: "#007bff",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "14px",
-                    cursor: isLoading ? "not-allowed" : "pointer",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#007bff',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
                     opacity: isLoading ? 0.7 : 1,
                   }}
                 >
-                  {isLoading ? "Sending..." : "Send Reset Email"}{" "}
-                  <ArrowRight style={{ width: "16px", height: "16px" }} />
+                  {isLoading ? 'Sending...' : 'Send Reset Email'}{' '}
+                  <ArrowRight style={{ width: '16px', height: '16px' }} />
                 </button>
               </form>
             ) : isLogin ? (
@@ -381,29 +319,29 @@ const LoginPage = ({ error }) => {
                 <form
                   onSubmit={handleLoginSubmit}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
                   }}
                 >
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Email
                     </label>
                     <Mail
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
@@ -412,63 +350,63 @@ const LoginPage = ({ error }) => {
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 8px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 8px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                   </div>
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Password
                     </label>
                     <Lock
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Your password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 40px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 40px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       style={{
-                        position: "absolute",
-                        right: "8px",
-                        top: "32px",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
+                        position: 'absolute',
+                        right: '8px',
+                        top: '32px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       {showPassword ? (
-                        <EyeOff style={{ width: "16px", height: "16px" }} />
+                        <EyeOff style={{ width: '16px', height: '16px' }} />
                       ) : (
-                        <Eye style={{ width: "16px", height: "16px" }} />
+                        <Eye style={{ width: '16px', height: '16px' }} />
                       )}
                     </button>
                   </div>
@@ -476,50 +414,50 @@ const LoginPage = ({ error }) => {
                     type="submit"
                     disabled={isLoading}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "4px",
-                      width: "100%",
-                      padding: "10px",
-                      backgroundColor: "#007bff",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      cursor: isLoading ? "not-allowed" : "pointer",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: '#007bff',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: isLoading ? 0.7 : 1,
                     }}
                   >
-                    {isLoading ? "Logging in..." : "Login"}{" "}
-                    <ArrowRight style={{ width: "16px", height: "16px" }} />
+                    {isLoading ? 'Logging in...' : 'Login'}{' '}
+                    <ArrowRight style={{ width: '16px', height: '16px' }} />
                   </button>
                 </form>
 
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginTop: "16px",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '16px',
                   }}
                 >
                   <button
                     onClick={handleGoogleAuth}
                     disabled={isLoading}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      width: "100%",
-                      padding: "10px",
-                      backgroundColor: "#fff",
-                      color: "#333",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      cursor: isLoading ? "not-allowed" : "pointer",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: '#fff',
+                      color: '#333',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: isLoading ? 0.7 : 1,
                     }}
                   >
@@ -546,7 +484,7 @@ const LoginPage = ({ error }) => {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.75 1 4.09 3.62 2.18 7.07l2.85 2.84c.87-2.6 3.30-4.53 6.16-4.53z"
                       />
                     </svg>
-                    {isLoading ? "Processing..." : "Continue with Google"}
+                    {isLoading ? 'Processing...' : 'Continue with Google'}
                   </button>
                 </div>
               </>
@@ -555,29 +493,29 @@ const LoginPage = ({ error }) => {
                 <form
                   onSubmit={handleSignupSubmit}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
                   }}
                 >
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Full Name
                     </label>
                     <User
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
@@ -586,32 +524,32 @@ const LoginPage = ({ error }) => {
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 8px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 8px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                   </div>
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Email
                     </label>
                     <Mail
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
@@ -620,97 +558,97 @@ const LoginPage = ({ error }) => {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 8px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 8px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                   </div>
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Password
                     </label>
                     <Lock
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Create a password"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 40px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 40px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       style={{
-                        position: "absolute",
-                        right: "8px",
-                        top: "32px",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
+                        position: 'absolute',
+                        right: '8px',
+                        top: '32px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       {showPassword ? (
-                        <EyeOff style={{ width: "16px", height: "16px" }} />
+                        <EyeOff style={{ width: '16px', height: '16px' }} />
                       ) : (
-                        <Eye style={{ width: "16px", height: "16px" }} />
+                        <Eye style={{ width: '16px', height: '16px' }} />
                       )}
                     </button>
                   </div>
-                  <div style={{ position: "relative" }}>
+                  <div style={{ position: 'relative' }}>
                     <label
                       style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontWeight: "500",
+                        display: 'block',
+                        marginBottom: '4px',
+                        fontWeight: '500',
                       }}
                     >
                       Confirm Password
                     </label>
                     <Lock
                       style={{
-                        position: "absolute",
-                        left: "12px",
-                        top: "36px",
-                        width: "16px",
-                        height: "16px",
-                        color: "#666",
+                        position: 'absolute',
+                        left: '12px',
+                        top: '36px',
+                        width: '16px',
+                        height: '16px',
+                        color: '#666',
                       }}
                     />
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Confirm your password"
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       style={{
-                        width: "100%",
-                        padding: "8px 8px 8px 36px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        width: '100%',
+                        padding: '8px 8px 8px 36px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
                       }}
                     />
                   </div>
@@ -718,51 +656,49 @@ const LoginPage = ({ error }) => {
                     type="submit"
                     disabled={isLoading}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "4px",
-                      width: "100%",
-                      padding: "10px",
-                      backgroundColor: "#007bff",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      cursor: isLoading ? "not-allowed" : "pointer",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: '#007bff',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: isLoading ? 0.7 : 1,
                     }}
                   >
-                    {isLoading
-                      ? "Creating account..."
-                      : "Create Executive Account"}{" "}
-                    <ArrowRight style={{ width: "16px", height: "16px" }} />
+                    {isLoading ? 'Creating account...' : 'Create Executive Account'}{' '}
+                    <ArrowRight style={{ width: '16px', height: '16px' }} />
                   </button>
                 </form>
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginTop: "16px",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '16px',
                   }}
                 >
                   <button
                     onClick={handleGoogleAuth}
                     disabled={isLoading}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      width: "100%",
-                      padding: "10px",
-                      backgroundColor: "#fff",
-                      color: "#333",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      cursor: isLoading ? "not-allowed" : "pointer",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: '#fff',
+                      color: '#333',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: isLoading ? 0.7 : 1,
                     }}
                   >
@@ -789,7 +725,7 @@ const LoginPage = ({ error }) => {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.75 1 4.09 3.62 2.18 7.07l2.85 2.84c.87-2.6 3.30-4.53 6.16-4.53z"
                       />
                     </svg>
-                    {isLoading ? "Processing..." : "Continue with Google"}
+                    {isLoading ? 'Processing...' : 'Continue with Google'}
                   </button>
                 </div>
               </>
@@ -798,23 +734,23 @@ const LoginPage = ({ error }) => {
 
           <div
             style={{
-              padding: "16px 24px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              textAlign: "center",
+              padding: '16px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              textAlign: 'center',
             }}
           >
             {!showForgotPassword && isLogin && (
               <button
                 onClick={showForgotPasswordForm}
                 style={{
-                  background: "none",
-                  border: "none",
-                  color: "#666",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  textDecoration: "underline",
+                  background: 'none',
+                  border: 'none',
+                  color: '#666',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
                 }}
               >
                 Forgot Password?
@@ -823,23 +759,22 @@ const LoginPage = ({ error }) => {
             <button
               onClick={toggleAuthMode}
               style={{
-                background: "none",
-                border: "none",
-                color: "#666",
-                fontSize: "14px",
-                cursor: "pointer",
-                textDecoration: "underline",
+                background: 'none',
+                border: 'none',
+                color: '#666',
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
               }}
             >
               {showForgotPassword
-                ? "Back to Login"
+                ? 'Back to Login'
                 : isLogin
                 ? "Don't have an account? Sign up as Executive"
-                : "Already have an account? Log in"}
+                : 'Already have an account? Log in'}
             </button>
-            <p style={{ color: "#666", fontSize: "12px" }}>
-              By continuing, you agree to Sagan's Terms of Service and Privacy
-              Policy
+            <p style={{ color: '#666', fontSize: '12px' }}>
+              By continuing, you agree to Sagan's Terms of Service and Privacy Policy
             </p>
           </div>
         </div>

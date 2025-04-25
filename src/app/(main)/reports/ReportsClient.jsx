@@ -1,18 +1,18 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Send, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Info, Eye, AlertCircle, Search } from "lucide-react";
-import { format, isAfter, isBefore, subDays, startOfDay, isEqual } from "date-fns";
-import { createBrowserClient } from "@supabase/ssr";
-import AnimatedTransition from "@/components/AnimatedTransition";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { Send, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Info, Eye, AlertCircle, Search } from 'lucide-react';
+import { format, isAfter, isBefore, subDays, startOfDay, isEqual } from 'date-fns';
+import AnimatedTransition from '@/components/AnimatedTransition';
 import { 
   Table, 
   TableBody, 
@@ -20,14 +20,14 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import { 
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Pagination,
   PaginationContent,
@@ -36,7 +36,8 @@ import {
   PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
+import { checkExistingReport, submitReport } from './reports-actions';
 
 export default function ReportsClient({
   userRole,
@@ -46,30 +47,25 @@ export default function ReportsClient({
   initialReportDates,
   initialReports,
 }) {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-
   // ReportForm Logic
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today = format(new Date(), 'yyyy-MM-dd');
   const sanitizeBusynessLevel = (value) => {
     const parsed = parseInt(value);
-    return isNaN(parsed) ? "5" : parsed.toString();
+    return isNaN(parsed) ? '5' : parsed.toString();
   };
 
   const [formData, setFormData] = useState({
     date: today,
-    completedTasks: "",
-    outstandingTasks: "",
-    needFromManager: "",
-    tomorrowPlans: "",
-    busynessLevel: "5",
+    completedTasks: '',
+    outstandingTasks: '',
+    needFromManager: '',
+    tomorrowPlans: '',
+    busynessLevel: '5',
   });
   const [loading, setLoading] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState("form");
+  const [viewMode, setViewMode] = useState('form');
   const [reportExists, setReportExists] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasShownRangeDialog, setHasShownRangeDialog] = useState(false);
@@ -81,64 +77,57 @@ export default function ReportsClient({
   useEffect(() => {
     if (initialReportData) {
       setReportExists(true);
-      setViewMode("view");
+      setViewMode('view');
       setFormData({
         date: initialReportData.date,
-        completedTasks: initialReportData.completed_task || "",
-        outstandingTasks: initialReportData.outstanding_task || "",
-        needFromManager: initialReportData.need_from_manager || "",
-        tomorrowPlans: initialReportData.tomorrows_plan || "",
+        completedTasks: initialReportData.completed_task || '',
+        outstandingTasks: initialReportData.outstanding_task || '',
+        needFromManager: initialReportData.need_from_manager || '',
+        tomorrowPlans: initialReportData.tomorrows_plan || '',
         busynessLevel: sanitizeBusynessLevel(initialReportData.business_level),
       });
     }
   }, [initialReportData]);
 
   useEffect(() => {
-    const checkExistingReport = async () => {
+    const checkExistingReportAsync = async () => {
       if (selectedDate && userId) {
-        const formattedDate = format(selectedDate, "yyyy-MM-dd");
-        const { data, error } = await supabase
-          .from("reports")
-          .select("*")
-          .eq("date", formattedDate)
-          .eq("assistant_id", userId)
-          .single();
-
-        if (error && error.code !== "PGRST116") {
-          console.error("Error checking existing report:", error);
-          toast.error("Failed to check existing report.", { duration: 3000 });
-        } else {
-          const existingReport = data;
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        try {
+          const existingReport = await checkExistingReport(formattedDate, userId);
           setReportExists(!!existingReport);
 
           if (existingReport) {
-            setViewMode("view");
+            setViewMode('view');
             setFormData({
               date: existingReport.date,
-              completedTasks: existingReport.completed_task || "",
-              outstandingTasks: existingReport.outstanding_task || "",
-              needFromManager: existingReport.need_from_manager || "",
-              tomorrowPlans: existingReport.tomorrows_plan || "",
+              completedTasks: existingReport.completed_task || '',
+              outstandingTasks: existingReport.outstanding_task || '',
+              needFromManager: existingReport.need_from_manager || '',
+              tomorrowPlans: existingReport.tomorrows_plan || '',
               busynessLevel: sanitizeBusynessLevel(existingReport.business_level),
             });
           } else {
-            setViewMode("form");
+            setViewMode('form');
             resetFormData(formattedDate);
           }
+        } catch (error) {
+          console.error('Error checking existing report:', error);
+          toast.error('Failed to check existing report.', { duration: 3000 });
         }
       }
     };
-    checkExistingReport();
+    checkExistingReportAsync();
   }, [selectedDate, userId]);
 
   const resetFormData = (date) => {
     setFormData({
       date: date,
-      completedTasks: "",
-      outstandingTasks: "",
-      needFromManager: "",
-      tomorrowPlans: "",
-      busynessLevel: "5",
+      completedTasks: '',
+      outstandingTasks: '',
+      needFromManager: '',
+      tomorrowPlans: '',
+      busynessLevel: '5',
     });
     setErrors({});
   };
@@ -174,11 +163,11 @@ export default function ReportsClient({
   const validateForm = () => {
     const newErrors = {};
     if (!formData.completedTasks.trim())
-      newErrors.completedTasks = "Completed tasks is required";
+      newErrors.completedTasks = 'Completed tasks is required';
     if (!formData.outstandingTasks.trim())
-      newErrors.outstandingTasks = "Outstanding tasks is required";
+      newErrors.outstandingTasks = 'Outstanding tasks is required';
     if (!formData.needFromManager.trim())
-      newErrors.needFromManager = "Need from manager is required";
+      newErrors.needFromManager = 'Need from manager is required';
     if (!formData.tomorrowPlans.trim())
       newErrors.tomorrowPlans = "Tomorrow's plans is required";
     setErrors(newErrors);
@@ -188,90 +177,44 @@ export default function ReportsClient({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error("Please fill in all required fields", { duration: 3000 });
+      toast.error('Please fill in all required fields', { duration: 3000 });
       return;
     }
     if (!userId) {
-      toast.error("No authenticated user found. Please log in.", {
+      toast.error('No authenticated user found. Please log in.', {
         duration: 3000,
       });
       return;
     }
 
     setLoading(true);
-    const currentDate = format(selectedDate, "yyyy-MM-dd");
+    const currentDate = format(selectedDate, 'yyyy-MM-dd');
 
-    if (reportExists) {
-      const { error, data } = await supabase
-        .from("reports")
-        .update({
-          completed_task: formData.completedTasks,
-          outstanding_task: formData.outstandingTasks,
-          need_from_manager: formData.needFromManager,
-          tomorrows_plan: formData.tomorrowPlans,
-          business_level: parseInt(formData.busynessLevel),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("date", currentDate)
-        .eq("assistant_id", userId)
-        .select()
-        .single();
+    try {
+      const data = await submitReport(formData, userId, executiveId, reportExists);
 
-      if (error) {
-        console.error("Error updating report:", error);
-        toast.error(`Failed to update report: ${error.message}`, {
-          duration: 3000,
-        });
-      } else {
-        toast.success("Report updated successfully", { duration: 3000 });
-        setViewMode("view");
-        setFormData({
-          date: data.date,
-          completedTasks: data.completed_task,
-          outstandingTasks: data.outstanding_task,
-          needFromManager: data.need_from_manager,
-          tomorrowPlans: data.tomorrows_plan,
-          busynessLevel: sanitizeBusynessLevel(data.business_level),
-        });
-      }
-    } else {
-      const { error, data } = await supabase
-        .from("reports")
-        .insert({
-          date: currentDate,
-          assistant_id: userId,
-          executive_id: executiveId,
-          completed_task: formData.completedTasks,
-          outstanding_task: formData.outstandingTasks,
-          need_from_manager: formData.needFromManager,
-          tomorrows_plan: formData.tomorrowPlans,
-          business_level: parseInt(formData.busynessLevel),
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error inserting report:", error);
-        toast.error(`Failed to submit report: ${error.message}`, {
-          duration: 3000,
-        });
-      } else {
-        toast.success("Report submitted successfully", { duration: 3000 });
-        setReportExists(true);
-        setViewMode("view");
-        setFormData({
-          date: data.date,
-          completedTasks: data.completed_task,
-          outstandingTasks: data.outstanding_task,
-          needFromManager: data.need_from_manager,
-          tomorrowPlans: data.tomorrows_plan,
-          busynessLevel: sanitizeBusynessLevel(data.business_level),
-        });
+      toast.success(reportExists ? 'Report updated successfully' : 'Report submitted successfully', { duration: 3000 });
+      setReportExists(true);
+      setViewMode('view');
+      setFormData({
+        date: data.date,
+        completedTasks: data.completed_task,
+        outstandingTasks: data.outstanding_task,
+        needFromManager: data.need_from_manager,
+        tomorrowPlans: data.tomorrows_plan,
+        busynessLevel: sanitizeBusynessLevel(data.business_level),
+      });
+      if (!reportExists) {
         setReportDates((prev) => new Set(prev).add(currentDate));
       }
+    } catch (error) {
+      console.error(`Error ${reportExists ? 'updating' : 'submitting'} report:`, error);
+      toast.error(`Failed to ${reportExists ? 'update' : 'submit'} report: ${error.message}`, {
+        duration: 3000,
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const goToToday = () => {
@@ -286,9 +229,9 @@ export default function ReportsClient({
   };
 
   const dayContent = (day) => {
-    const hasReport = reportDates.has(format(day, "yyyy-MM-dd"));
+    const hasReport = reportDates.has(format(day, 'yyyy-MM-dd'));
     return (
-      <div className={`${hasReport ? "font-bold" : "font-normal"}`}>
+      <div className={`${hasReport ? 'font-bold' : 'font-normal'}`}>
         {day.getDate()}
       </div>
     );
@@ -296,10 +239,10 @@ export default function ReportsClient({
 
   const getBusynessLabel = (level) => {
     const levelNum = parseInt(level);
-    if (levelNum <= 3) return "Light day";
-    if (levelNum <= 6) return "Moderate";
+    if (levelNum <= 3) return 'Light day';
+    if (levelNum <= 6) return 'Moderate';
     if (levelNum === 7) return null;
-    return "Very busy";
+    return 'Very busy';
   };
 
   const formVariants = {
@@ -325,12 +268,12 @@ export default function ReportsClient({
   const isDateWithinSubmissionRange =
     !isBefore(selectedDate, sevenDaysAgo) && !isAfter(selectedDate, new Date());
   const isToday = isEqual(startOfDay(selectedDate), startOfDay(new Date()));
-  const showFormattedDate = format(selectedDate, "MMM dd, yyyy");
+  const showFormattedDate = format(selectedDate, 'MMM dd, yyyy');
 
   // ReportHistory Logic
   const [selectedReport, setSelectedReport] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [reports, setReports] = useState(initialReports);
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -339,7 +282,7 @@ export default function ReportsClient({
   const filteredReports = reports
     .filter(
       (report) =>
-        format(new Date(report.date), "yyyy-MM-dd").includes(searchTerm) ||
+        format(new Date(report.date), 'yyyy-MM-dd').includes(searchTerm) ||
         report.completed_task?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.status?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -393,9 +336,9 @@ export default function ReportsClient({
         <motion.div variants={itemVariants}>
           <h3 className="text-xl font-medium">End-of-Day Report</h3>
           <p className="text-muted-foreground mt-1">
-            {viewMode === "view"
-              ? "Viewing report for"
-              : "Creating report for"}{" "}
+            {viewMode === 'view'
+              ? 'Viewing report for'
+              : 'Creating report for'}{' '}
             {showFormattedDate}
           </p>
         </motion.div>
@@ -445,12 +388,12 @@ export default function ReportsClient({
         </motion.div>
       </div>
 
-      {viewMode === "view" && reportExists ? (
+      {viewMode === 'view' && reportExists ? (
         <div className="space-y-6">
           <motion.div variants={itemVariants} className="space-y-2">
             <Label className="text-muted-foreground">Busyness Level</Label>
             <p className="text-lg font-medium">
-              {getBusynessLabel(formData.busynessLevel) || "Moderate"}
+              {getBusynessLabel(formData.busynessLevel) || 'Moderate'}
             </p>
           </motion.div>
 
@@ -476,7 +419,7 @@ export default function ReportsClient({
 
           {isDateWithinSubmissionRange && (
             <motion.div variants={itemVariants} className="flex justify-end pt-2">
-              <Button type="button" onClick={() => setViewMode("form")}>
+              <Button type="button" onClick={() => setViewMode('form')}>
                 Edit Report
               </Button>
             </motion.div>
@@ -495,9 +438,9 @@ export default function ReportsClient({
               onChange={handleChange}
               placeholder="What did you accomplish today?"
               className={`min-h-24 resize-none ${
-                errors.completedTasks ? "border-destructive" : ""
+                errors.completedTasks ? 'border-destructive' : ''
               }`}
-              disabled={viewMode === "view"}
+              disabled={viewMode === 'view'}
               required
             />
             {errors.completedTasks && (
@@ -518,9 +461,9 @@ export default function ReportsClient({
               onChange={handleChange}
               placeholder="What tasks are still in progress or pending?"
               className={`min-h-24 resize-none ${
-                errors.outstandingTasks ? "border-destructive" : ""
+                errors.outstandingTasks ? 'border-destructive' : ''
               }`}
-              disabled={viewMode === "view"}
+              disabled={viewMode === 'view'}
               required
             />
             {errors.outstandingTasks && (
@@ -541,9 +484,9 @@ export default function ReportsClient({
               onChange={handleChange}
               placeholder="What do you need from your manager to move forward?"
               className={`min-h-24 resize-none ${
-                errors.needFromManager ? "border-destructive" : ""
+                errors.needFromManager ? 'border-destructive' : ''
               }`}
-              disabled={viewMode === "view"}
+              disabled={viewMode === 'view'}
               required
             />
             {errors.needFromManager && (
@@ -564,9 +507,9 @@ export default function ReportsClient({
               onChange={handleChange}
               placeholder="What are your priorities for tomorrow?"
               className={`min-h-24 resize-none ${
-                errors.tomorrowPlans ? "border-destructive" : ""
+                errors.tomorrowPlans ? 'border-destructive' : ''
               }`}
-              disabled={viewMode === "view"}
+              disabled={viewMode === 'view'}
               required
             />
             {errors.tomorrowPlans && (
@@ -585,7 +528,7 @@ export default function ReportsClient({
                 min={1}
                 step={1}
                 className="py-4"
-                disabled={viewMode === "view"}
+                disabled={viewMode === 'view'}
               />
               <div className="flex justify-between text-sm text-muted-foreground mt-1">
                 <span>Light day (1)</span>
@@ -613,7 +556,7 @@ export default function ReportsClient({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setViewMode("view")}
+                    onClick={() => setViewMode('view')}
                     disabled={loading}
                   >
                     Cancel
@@ -625,7 +568,7 @@ export default function ReportsClient({
                   disabled={loading || !isDateWithinSubmissionRange || !userId}
                 >
                   <Send className="w-4 h-4" />
-                  {reportExists ? "Save Changes" : "Submit Report"}
+                  {reportExists ? 'Save Changes' : 'Submit Report'}
                 </Button>
               </div>
             </div>
@@ -699,7 +642,7 @@ export default function ReportsClient({
                 variants={itemVariants}
                 className="text-muted-foreground"
               >
-                {format(new Date(selectedReport.date), "MMMM dd, yyyy")}
+                {format(new Date(selectedReport.date), 'MMMM dd, yyyy')}
               </motion.p>
             </div>
             <motion.div variants={itemVariants}>
@@ -712,7 +655,7 @@ export default function ReportsClient({
           <motion.div variants={itemVariants} className="space-y-2 mt-6">
             <h4 className="font-medium text-muted-foreground">Busyness Level</h4>
             <p className="text-lg">
-              {getBusynessLabel(selectedReport.business_level?.toString() || "5")}
+              {getBusynessLabel(selectedReport.business_level?.toString() || '5')}
             </p>
           </motion.div>
 
@@ -770,235 +713,235 @@ export default function ReportsClient({
                 }}
               />
             </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Busyness</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedReports.length > 0 ? (
-                    paginatedReports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell className="font-medium">
-                          {format(new Date(report.date), "MMM dd, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          {getBusynessLabel(
-                            report.business_level?.toString() || "5"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-1"
-                            onClick={() => viewReport(report)}
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span>View</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center py-4 text-muted-foreground"
-                      >
-                        No reports match your search.
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Busyness</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedReports.length > 0 ? (
+                  paginatedReports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">
+                        {format(new Date(report.date), 'MMM dd, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {getBusynessLabel(
+                          report.business_level?.toString() || '5'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-1"
+                          onClick={() => viewReport(report)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span>View</span>
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center py-4 text-muted-foreground"
+                    >
+                      No reports match your search.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
 
-              {totalPages > 1 && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() =>
-                            currentPage > 1 && handlePageChange(currentPage - 1)
-                          }
-                          className={
-                            currentPage === 1
-                              ? "pointer-events-none opacity-50"
-                              : ""
-                          }
-                        />
-                      </PaginationItem>
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          currentPage > 1 && handlePageChange(currentPage - 1)
+                        }
+                        className={
+                          currentPage === 1
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
+                      />
+                    </PaginationItem>
 
-                      {Array.from(
-                        { length: Math.min(5, totalPages) },
-                        (_, i) => {
-                          let pageToShow;
+                    {Array.from(
+                      { length: Math.min(5, totalPages) },
+                      (_, i) => {
+                        let pageToShow;
 
-                          if (totalPages <= 5) {
+                        if (totalPages <= 5) {
+                          pageToShow = i + 1;
+                        } else if (currentPage <= 3) {
+                          if (i < 4) {
                             pageToShow = i + 1;
-                          } else if (currentPage <= 3) {
-                            if (i < 4) {
-                              pageToShow = i + 1;
-                            } else {
-                              pageToShow = totalPages;
-                            }
-                          } else if (currentPage >= totalPages - 2) {
-                            if (i === 0) {
-                              pageToShow = 1;
-                            } else {
-                              pageToShow = totalPages - (4 - i);
-                            }
                           } else {
-                            if (i === 0) {
-                              pageToShow = 1;
-                            } else if (i === 4) {
-                              pageToShow = totalPages;
-                            } else {
-                              pageToShow = currentPage + (i - 2);
-                            }
+                            pageToShow = totalPages;
                           }
-
-                          if (
-                            (i === 1 && pageToShow !== 2) ||
-                            (i === 3 && pageToShow !== totalPages - 1)
-                          ) {
-                            return (
-                              <PaginationItem key={`ellipsis-${i}`}>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            );
+                        } else if (currentPage >= totalPages - 2) {
+                          if (i === 0) {
+                            pageToShow = 1;
+                          } else {
+                            pageToShow = totalPages - (4 - i);
                           }
+                        } else {
+                          if (i === 0) {
+                            pageToShow = 1;
+                          } else if (i === 4) {
+                            pageToShow = totalPages;
+                          } else {
+                            pageToShow = currentPage + (i - 2);
+                          }
+                        }
 
+                        if (
+                          (i === 1 && pageToShow !== 2) ||
+                          (i === 3 && pageToShow !== totalPages - 1)
+                        ) {
                           return (
-                            <PaginationItem key={pageToShow}>
-                              <PaginationLink
-                                isActive={currentPage === pageToShow}
-                                onClick={() => handlePageChange(pageToShow)}
-                              >
-                                {pageToShow}
-                              </PaginationLink>
+                            <PaginationItem key={`ellipsis-${i}`}>
+                              <PaginationEllipsis />
                             </PaginationItem>
                           );
                         }
-                      )}
 
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() =>
-                            currentPage < totalPages &&
-                            handlePageChange(currentPage + 1)
-                          }
-                          className={
-                            currentPage === totalPages
-                              ? "pointer-events-none opacity-50"
-                              : ""
-                          }
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      );
-    };
+                        return (
+                          <PaginationItem key={pageToShow}>
+                            <PaginationLink
+                              isActive={currentPage === pageToShow}
+                              onClick={() => handlePageChange(pageToShow)}
+                            >
+                              {pageToShow}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      }
+                    )}
 
-    return (
-      <AnimatedTransition>
-        <div className="container mx-auto px-4 md:px-6 py-8">
-          <div className="max-w-2xl mx-auto text-center mb-8">
-            <h1 className="mb-4 text-4xl font-medium tracking-tight">
-              End-of-Day Reports
-            </h1>
-            {userRole === "assistant" && (
-              <p className="text-muted-foreground text-lg">
-                Summarize your day, stay aligned, and plan effectively.
-                <br />
-                <span className="text-sm font-medium mt-1 inline-block">
-                  Reports can be viewed for any date but can only be submitted for
-                  the current day and up to 7 days in the past.
-                  <span className="text-destructive ml-1">
-                    All fields are required.
-                  </span>
-                </span>
-              </p>
-            )}
-          </div>
-
-          <div className="max-w-3xl mx-auto mt-8">
-            {userRole === null ? (
-              <p className="text-center text-muted-foreground">
-                Loading user role...
-              </p>
-            ) : (
-              <>
-                {userRole === "assistant" && renderReportForm()}
-                {userRole === "executive" && renderReportHistory()}
-              </>
-            )}
-          </div>
-
-          <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Select Date</DialogTitle>
-                <DialogDescription>
-                  Choose a date to view or create a report
-                </DialogDescription>
-              </DialogHeader>
-              <div className="p-2">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  className="rounded-md border pointer-events-auto mx-auto"
-                  components={{
-                    DayContent: ({ date }) => dayContent(date),
-                  }}
-                />
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          currentPage < totalPages &&
+                          handlePageChange(currentPage + 1)
+                        }
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog
-            open={dialogOpen}
-            onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) setHasShownRangeDialog(true);
-            }}
-          >
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Date Out of Range</DialogTitle>
-                <DialogDescription>
-                  Reports can only be submitted or edited for dates within the last
-                  7 days
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 text-center">
-                <p className="text-muted-foreground mb-4">
-                  You can view reports for any date, but new reports or edits can
-                  only be made for dates within the last 7 days.
-                </p>
-                <Button
-                  onClick={() => {
-                    setDialogOpen(false);
-                    setHasShownRangeDialog(true);
-                  }}
-                >
-                  I Understand
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </AnimatedTransition>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     );
+  };
+
+  return (
+    <AnimatedTransition>
+      <div className="container mx-auto px-4 md:px-6 py-8">
+        <div className="max-w-2xl mx-auto text-center mb-8">
+          <h1 className="mb-4 text-4xl font-medium tracking-tight">
+            End-of-Day Reports
+          </h1>
+          {userRole === 'assistant' && (
+            <p className="text-muted-foreground text-lg">
+              Summarize your day, stay aligned, and plan effectively.
+              <br />
+              <span className="text-sm font-medium mt-1 inline-block">
+                Reports can be viewed for any date but can only be submitted for
+                the current day and up to 7 days in the past.
+                <span className="text-destructive ml-1">
+                  All fields are required.
+                </span>
+              </span>
+            </p>
+          )}
+        </div>
+
+        <div className="max-w-3xl mx-auto mt-8">
+          {userRole === null ? (
+            <p className="text-center text-muted-foreground">
+              Loading user role...
+            </p>
+          ) : (
+            <>
+              {userRole === 'assistant' && renderReportForm()}
+              {userRole === 'executive' && renderReportHistory()}
+            </>
+          )}
+        </div>
+
+        <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Select Date</DialogTitle>
+              <DialogDescription>
+                Choose a date to view or create a report
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-2">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                className="rounded-md border pointer-events-auto mx-auto"
+                components={{
+                  DayContent: ({ date }) => dayContent(date),
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setHasShownRangeDialog(true);
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Date Out of Range</DialogTitle>
+              <DialogDescription>
+                Reports can only be submitted or edited for dates within the last
+                7 days
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 text-center">
+              <p className="text-muted-foreground mb-4">
+                You can view reports for any date, but new reports or edits can
+                only be made for dates within the last 7 days.
+              </p>
+              <Button
+                onClick={() => {
+                  setDialogOpen(false);
+                  setHasShownRangeDialog(true);
+                }}
+              >
+                I Understand
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AnimatedTransition>
+  );
 }

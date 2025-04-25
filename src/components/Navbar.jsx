@@ -1,5 +1,6 @@
-"use client";
-import React, { useState, useEffect } from "react";
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
   Mic,
   ListChecks,
@@ -8,35 +9,35 @@ import {
   Settings,
   LogIn,
   LogOut,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { usePathname, useRouter } from "next/navigation";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { checkSession, signOut } from './navbar-actions';
 
 const adminMenu = [
-  { href: "/admin", icon: <Mic className="h-4 w-4 mr-1" />, label: "Dashboard" },
-  { href: "/voice", icon: <Mic className="h-4 w-4 mr-1" />, label: "Voice Input" },
-  { href: "/projects", icon: <ListChecks className="h-4 w-4 mr-1" />, label: "Project Board" },
-  { href: "/reports", icon: <ClipboardList className="h-4 w-4 mr-1" />, label: "Reports" },
-  { href: "/attachments", icon: <BookOpen className="h-4 w-4 mr-1" />, label: "Reference" },
-  { href: "/settings", icon: <Settings className="h-4 w-4 mr-1" />, label: "Settings" },
+  { href: '/admin', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Dashboard' },
+  { href: '/voice', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Voice Input' },
+  { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
+  { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
+  { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
+  { href: '/settings', icon: <Settings className="h-4 w-4 mr-1" />, label: 'Settings' },
 ];
 
 const privateMenuItems = [
-  { href: "/voice", icon: <Mic className="h-4 w-4 mr-1" />, label: "Voice Input" },
-  { href: "/projects", icon: <ListChecks className="h-4 w-4 mr-1" />, label: "Project Board" },
-  { href: "/reports", icon: <ClipboardList className="h-4 w-4 mr-1" />, label: "Reports" },
-  { href: "/attachments", icon: <BookOpen className="h-4 w-4 mr-1" />, label: "Reference" },
-  { href: "/settings", icon: <Settings className="h-4 w-4 mr-1" />, label: "Settings" },
+  { href: '/voice', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Voice Input' },
+  { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
+  { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
+  { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
+  { href: '/settings', icon: <Settings className="h-4 w-4 mr-1" />, label: 'Settings' },
 ];
 
 const privateAssistantItems = [
-  { href: "/projects", icon: <ListChecks className="h-4 w-4 mr-1" />, label: "Project Board" },
-  { href: "/reports", icon: <ClipboardList className="h-4 w-4 mr-1" />, label: "Reports" },
-  { href: "/attachments", icon: <BookOpen className="h-4 w-4 mr-1" />, label: "Reference" },
+  { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
+  { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
+  { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
 ];
 
 const Navbar = () => {
@@ -48,108 +49,100 @@ const Navbar = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const checkUserSession = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        console.log("Initial session check:", session ? "Found" : "Missing");
-        if (!session) {
+        const { session, user } = await checkSession();
+        console.log('Initial session check:', session ? 'Found' : 'Missing');
+        if (!session || !user) {
           setIsLoggedIn(false);
           setLoggedInUser(null);
           return;
         }
 
-        const { data, error } = await supabase
-          .from("users")
-          .select("id, email, role, status, assistant_id")
-          .eq("id", session.user.id)
-          .single();
-        if (error) throw error;
-
-        if (data.status === "pending" || data.status === "rejected") {
-          await supabase.auth.signOut();
+        if (user.status === 'pending' || user.status === 'rejected') {
+          await signOut();
           setIsLoggedIn(false);
           setLoggedInUser(null);
           toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "Please wait until your account is approved by an admin",
+            variant: 'destructive',
+            title: 'Access Denied',
+            description: 'Please wait until your account is approved by an admin',
           });
-          router.push("/login?error=account_pending");
+          router.push('/login?error=account_pending');
         } else {
           setIsLoggedIn(true);
-          setLoggedInUser(data);
+          setLoggedInUser(user);
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error('Error checking session:', error);
         setIsLoggedIn(false);
         setLoggedInUser(null);
         toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "Authentication error. Please log in again.",
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'Authentication error. Please log in again.',
         });
-        router.push("/login");
+        router.push('/login');
       }
     };
 
-    checkSession();
+    checkUserSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth event:", event, "Session:", session ? "Found" : "Missing");
-        if (event === "SIGNED_OUT") {
-          setIsLoggedIn(false);
-          setLoggedInUser(null);
-          if (pathname !== "/login") {
-            router.push("/login");
-          }
-        } else if (session) {
-          try {
-            const { data, error } = await supabase
-              .from("users")
-              .select("id, email, role, status, assistant_id")
-              .eq("id", session.user.id)
-              .single();
-            if (error) throw error;
-            if (data.status === "pending" || data.status === "rejected") {
-              await supabase.auth.signOut();
-              setIsLoggedIn(false);
-              setLoggedInUser(null);
-              toast({
-                variant: "destructive",
-                title: "Access Denied",
-                description: "Please wait until your account is approved by an admin",
-              });
-              router.push("/login?error=account_pending");
-            } else {
-              setIsLoggedIn(true);
-              setLoggedInUser(data);
-            }
-          } catch (error) {
-            console.error("Error fetching user:", error);
+    // Client-side auth state change listener (for real-time updates)
+    const eventSource = new EventSource('/api/auth-listener');
+    eventSource.onmessage = async (event) => {
+      const { event: authEvent, session } = JSON.parse(event.data);
+      console.log('Auth event:', authEvent, 'Session:', session ? 'Found' : 'Missing');
+      if (authEvent === 'SIGNED_OUT') {
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+        if (pathname !== '/login') {
+          router.push('/login');
+        }
+      } else if (session) {
+        try {
+          const { user } = await checkSession();
+          if (user.status === 'pending' || user.status === 'rejected') {
+            await signOut();
             setIsLoggedIn(false);
             setLoggedInUser(null);
             toast({
-              variant: "destructive",
-              title: "Access Denied",
-              description: "User not found. Please contact support.",
+              variant: 'destructive',
+              title: 'Access Denied',
+              description: 'Please wait until your account is approved by an admin',
             });
-            router.push("/login?error=user_not_found");
+            router.push('/login?error=account_pending');
+          } else {
+            setIsLoggedIn(true);
+            setLoggedInUser(user);
           }
-        } else {
+        } catch (error) {
+          console.error('Error fetching user:', error);
           setIsLoggedIn(false);
           setLoggedInUser(null);
-          if (pathname !== "/login") {
-            router.push("/login");
-          }
+          toast({
+            variant: 'destructive',
+            title: 'Access Denied',
+            description: 'User not found. Please contact support.',
+          });
+          router.push('/login?error=user_not_found');
+        }
+      } else {
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+        if (pathname !== '/login') {
+          router.push('/login');
         }
       }
-    );
+    };
+
+    eventSource.onerror = () => {
+      console.error('EventSource error');
+      eventSource.close();
+    };
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      eventSource.close();
     };
   }, [pathname, router, toast]);
 
@@ -159,22 +152,19 @@ const Navbar = () => {
     try {
       // Clear local storage explicitly
       localStorage.removeItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`);
-      // Clear cookies if used
-      document.cookie = `sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
 
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await signOut();
 
       setIsLoggedIn(false);
       setLoggedInUser(null);
       // Use full page redirect to ensure fresh state
-      window.location.href = "/login";
+      window.location.href = '/login';
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
       toast({
-        variant: "destructive",
-        title: "Logout Failed",
-        description: "Failed to log out. Please try again.",
+        variant: 'destructive',
+        title: 'Logout Failed',
+        description: 'Failed to log out. Please try again.',
       });
     } finally {
       setIsLoggingOut(false);
@@ -189,7 +179,7 @@ const Navbar = () => {
         </Link>
         <div className="flex items-center">
           <div className="flex space-x-1 mr-4">
-            {isLoggedIn && loggedInUser?.role === "admin" && (
+            {isLoggedIn && loggedInUser?.role === 'admin' && (
               <>
                 {adminMenu.map((item) => (
                   <Button
@@ -197,8 +187,8 @@ const Navbar = () => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex items-center",
-                      pathname === item.href && "bg-accent text-accent-foreground"
+                      'flex items-center',
+                      pathname === item.href && 'bg-accent text-accent-foreground'
                     )}
                     asChild
                   >
@@ -210,7 +200,7 @@ const Navbar = () => {
                 ))}
               </>
             )}
-            {isLoggedIn && loggedInUser?.role === "executive" && (
+            {isLoggedIn && loggedInUser?.role === 'executive' && (
               <>
                 {privateMenuItems.map((item) => (
                   <Button
@@ -218,8 +208,8 @@ const Navbar = () => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex items-center",
-                      pathname === item.href && "bg-accent text-accent-foreground"
+                      'flex items-center',
+                      pathname === item.href && 'bg-accent text-accent-foreground'
                     )}
                     asChild
                   >
@@ -231,7 +221,7 @@ const Navbar = () => {
                 ))}
               </>
             )}
-            {isLoggedIn && loggedInUser?.role === "assistant" && (
+            {isLoggedIn && loggedInUser?.role === 'assistant' && (
               <>
                 {privateAssistantItems.map((item) => (
                   <Button
@@ -239,8 +229,8 @@ const Navbar = () => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex items-center",
-                      pathname === item.href && "bg-accent text-accent-foreground"
+                      'flex items-center',
+                      pathname === item.href && 'bg-accent text-accent-foreground'
                     )}
                     asChild
                   >
@@ -262,14 +252,10 @@ const Navbar = () => {
               disabled={isLoggingOut}
             >
               <LogOut className="h-4 w-4 mr-1" />
-              <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center mx-2"
-            >
+            <Button variant="outline" size="sm" className="flex items-center mx-2">
               <Link href="/login" className="flex justify-center items-center">
                 <LogIn className="h-4 w-4 mr-1" />
                 <span>Login / Signup</span>

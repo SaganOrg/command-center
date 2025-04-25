@@ -1,7 +1,8 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 import {
   ListChecks,
   Plus,
@@ -13,26 +14,43 @@ import {
   Inbox,
   Kanban,
   Grid,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import TaskColumn from "@/components/projects/TaskColumn";
-import TaskForm from "@/components/projects/TaskForm";
-import TaskEditDialog from "@/components/projects/TaskEditDialog";
-import ColumnCarousel from "@/components/projects/ColumnCarousel";
-import ProjectsGrid from "@/components/projects/ProjectsGrid";
-import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import TaskColumn from '@/components/projects/TaskColumn';
+import TaskForm from '@/components/projects/TaskForm';
+import TaskEditDialog from '@/components/projects/TaskEditDialog';
+import ColumnCarousel from '@/components/projects/ColumnCarousel';
+import ProjectsGrid from '@/components/projects/ProjectsGrid';
+import { useRouter } from 'next/navigation';
+import {
+  updateTaskStatus,
+  reorderTasks,
+  saveTask,
+  deleteTask,
+  createTask,
+  addComment,
+  editComment,
+  deleteComment,
+} from './projects-actions';
+import { createBrowserClient } from '@supabase/ssr';
 
-export default function ProjectsClient({ userRole, userId, tasks: initialTasks, comments: initialComments, users }) {
+export default function ProjectsClient({
+  userRole,
+  userId,
+  tasks: initialTasks,
+  comments: initialComments,
+  users,
+}) {
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -40,38 +58,62 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const [tasks, setTasks] = useState(initialTasks);
   const [comments, setComments] = useState(initialComments);
   const [columns] = useState([
-    { id: "inbox", title: "Inbox" },
-    { id: "confirmedreceived", title: "Confirmed Received" },
-    { id: "inprogress", title: "In Progress" },
-    { id: "waiting", title: "Waiting" },
-    { id: "review", title: "Review" },
-    { id: "archive", title: "Archive" },
+    { id: 'inbox', title: 'Inbox' },
+    { id: 'confirmedreceived', title: 'Confirmed Received' },
+    { id: 'inprogress', title: 'In Progress' },
+    { id: 'waiting', title: 'Waiting' },
+    { id: 'review', title: 'Review' },
+    { id: 'archive', title: 'Archive' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-  const [newTaskStatus, setNewTaskStatus] = useState("inbox");
+  const [newTaskStatus, setNewTaskStatus] = useState('inbox');
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [editingColumnId, setEditingColumnId] = useState(null);
-  const [activeView, setActiveView] = useState("kanban");
+  const [activeView, setActiveView] = useState('kanban');
   const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
+    // Handle drag-and-drop events
     const handleGlobalDragStart = (e) => {
-      const taskId = e.dataTransfer?.getData("taskId");
+      const taskId = e.dataTransfer?.getData('taskId');
       if (taskId) setDraggedTaskId(taskId);
     };
     const handleGlobalDragEnd = () => setDraggedTaskId(null);
 
-    document.addEventListener("dragstart", handleGlobalDragStart);
-    document.addEventListener("dragend", handleGlobalDragEnd);
+    document.addEventListener('dragstart', handleGlobalDragStart);
+    document.addEventListener('dragend', handleGlobalDragEnd);
+
+    // Set up Supabase real-time subscription for tasks
+    const channel = supabase
+      .channel('tasks-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tasks',
+        },
+        (payload) => {
+          const updatedTask = payload.new;
+          setTasks((prev) =>
+            prev.map((task) =>
+              task.id === updatedTask.id ? { ...task, ...updatedTask } : task
+            )
+          );
+          setRefreshKey((prev) => prev + 1); // Force re-render of ColumnCarousel
+        }
+      )
+      .subscribe();
 
     return () => {
-      document.removeEventListener("dragstart", handleGlobalDragStart);
-      document.removeEventListener("dragend", handleGlobalDragEnd);
+      document.removeEventListener('dragstart', handleGlobalDragStart);
+      document.removeEventListener('dragend', handleGlobalDragEnd);
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -83,29 +125,26 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleDrop = async (taskId, newStatus) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("tasks")
-        .update({ status: newStatus })
-        .eq("id", taskId);
-      if (error) throw error;
+      await updateTaskStatus(taskId, newStatus);
 
       setTasks((prev) =>
         prev.map((task) =>
           task.id === taskId ? { ...task, status: newStatus } : task
         )
       );
+      setRefreshKey((prev) => prev + 1); // Force re-render of ColumnCarousel
       const columnTitle =
         columns.find((col) => col.id === newStatus)?.title || newStatus;
       toast({
-        title: "Project moved",
+        title: 'Project moved',
         description: `Project moved to ${columnTitle}.`,
       });
     } catch (error) {
-      console.error("Error updating task status:", error);
+      console.error('Error updating task status:', error);
       toast({
-        title: "Error",
-        description: "Failed to move project",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to move project',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -129,13 +168,11 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
       ...task,
       order: index,
     }));
+
     try {
       setIsLoading(true);
-      await Promise.all(
-        updatedTasks.map((task) =>
-          supabase.from("tasks").update({ order: task.order }).eq("id", task.id)
-        )
-      );
+      await reorderTasks(updatedTasks);
+
       setTasks((prev) => {
         const otherTasks = prev.filter((task) => task.status !== status);
         return [...otherTasks, ...updatedTasks].sort(
@@ -144,11 +181,11 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
       });
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error("Error reordering tasks:", error);
+      console.error('Error reordering tasks:', error);
       toast({
-        title: "Error",
-        description: "Failed to reorder tasks",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to reorder tasks',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -158,8 +195,8 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
 
   const handleDragOver = (e, status) => {
     e.preventDefault();
-    if (e.dataTransfer && e.dataTransfer.types.includes("taskId")) {
-      const taskId = e.dataTransfer.getData("taskId");
+    if (e.dataTransfer && e.dataTransfer.types.includes('taskId')) {
+      const taskId = e.dataTransfer.getData('taskId');
       if (taskId && draggedTaskId !== taskId) setDraggedTaskId(taskId);
     }
   };
@@ -172,39 +209,25 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleSaveTask = async (updatedTask) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          title: updatedTask.title || "Untitled",
-          task: updatedTask.task || "",
-          status: updatedTask.status || "inbox",
-          labels: updatedTask.labels || "",
-          attachments: updatedTask.attachments || "",
-          due_date: updatedTask.due_date,
-          purpose: updatedTask.purpose || "",
-          end_result: updatedTask.end_result || "",
-        })
-        .eq("id", updatedTask.id);
-      if (error) throw error;
+      const savedTask = await saveTask(updatedTask);
 
       setTasks((prev) =>
-        prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+        prev.map((t) => (t.id === updatedTask.id ? savedTask : t))
       );
       if (selectedTask && selectedTask.id === updatedTask.id) {
-        setSelectedTask(updatedTask);
+        setSelectedTask(savedTask);
       }
-        setIsTaskDialogOpen(false);
-        setIsLoading(false);
+      setIsTaskDialogOpen(false);
       toast({
-        title: "Project updated",
-        description: "Your project has been saved.",
+        title: 'Project updated',
+        description: 'Your project has been saved.',
       });
     } catch (error) {
-      console.error("Error saving task:", error);
+      console.error('Error saving task:', error);
       toast({
-        title: "Error",
-        description: "Failed to save project",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save project',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -214,8 +237,7 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleDeleteTask = async (taskId) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-      if (error) throw error;
+      await deleteTask(taskId);
 
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
       setComments((prev) =>
@@ -223,15 +245,15 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
       );
       setIsTaskDialogOpen(false);
       toast({
-        title: "Project deleted",
-        description: "Project has been removed.",
+        title: 'Project deleted',
+        description: 'Project has been removed.',
       });
     } catch (error) {
-      console.error("Error deleting task:", error);
+      console.error('Error deleting task:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete project",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete project',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -299,40 +321,19 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleAddComment = async (taskId, comment) => {
     try {
       setIsLoading(true);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
+      const newComment = await addComment(taskId, comment, userId);
 
-      const { data: publicUser, error: publicError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (publicError) throw publicError;
-
-      const newComment = {
-        task_id: taskId,
-        user_id: user.id,
-        content: comment.content || "",
-        author_name: publicUser.full_name || publicUser.role,
-      };
-
-      const { data, error } = await supabase
-        .from("comments")
-        .insert([newComment])
-        .select();
-      if (error) throw error;
-
-      setComments((prev) => [...prev, data[0]]);
+      setComments((prev) => [...prev, newComment]);
       toast({
-        title: "Comment added",
-        description: "Your comment has been added.",
+        title: 'Comment added',
+        description: 'Your comment has been added.',
       });
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error('Error adding comment:', error);
       toast({
-        title: "Error",
-        description: "Failed to add comment",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to add comment',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -342,30 +343,23 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleEditComment = async (taskId, commentId, updatedComment) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("comments")
-        .update({
-          content: updatedComment.content || "",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", commentId);
-      if (error) throw error;
+      const editedComment = await editComment(commentId, updatedComment);
 
       setComments((prev) =>
         prev.map((comment) =>
-          comment.id === commentId ? { ...comment, ...updatedComment } : comment
+          comment.id === commentId ? { ...comment, ...editedComment } : comment
         )
       );
       toast({
-        title: "Comment updated",
-        description: "Your comment has been updated.",
+        title: 'Comment updated',
+        description: 'Your comment has been updated.',
       });
     } catch (error) {
-      console.error("Error editing comment:", error);
+      console.error('Error editing comment:', error);
       toast({
-        title: "Error",
-        description: "Failed to edit comment",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to edit comment',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -375,23 +369,19 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
   const handleDeleteComment = async (taskId, commentId) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("comments")
-        .delete()
-        .eq("id", commentId);
-      if (error) throw error;
+      await deleteComment(commentId);
 
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
       toast({
-        title: "Comment deleted",
-        description: "Your comment has been removed.",
+        title: 'Comment deleted',
+        description: 'Your comment has been removed.',
       });
     } catch (error) {
-      console.error("Error deleting comment:", error);
+      console.error('Error deleting comment:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete comment",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete comment',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -400,24 +390,24 @@ export default function ProjectsClient({ userRole, userId, tasks: initialTasks, 
 
   const handleEditColumnTitle = (id, newTitle) => {
     toast({
-      title: "Column names are fixed",
-      description: "Column names cannot be changed.",
+      title: 'Column names are fixed',
+      description: 'Column names cannot be changed.',
     });
   };
 
   const getColumnIcon = (columnId) => {
     switch (columnId) {
-      case "inbox":
+      case 'inbox':
         return <Inbox className="h-5 w-5" />;
-      case "confirmedreceived":
+      case 'confirmedreceived':
         return <ClipboardList className="h-5 w-5" />;
-      case "inprogress":
+      case 'inprogress':
         return <Clock className="h-5 w-5" />;
-      case "waiting":
+      case 'waiting':
         return <Timer className="h-5 w-5" />;
-      case "review":
+      case 'review':
         return <FileText className="h-5 w-5" />;
-      case "archive":
+      case 'archive':
         return <Archive className="h-5 w-5" />;
       default:
         return <ListChecks className="h-5 w-5" />;
