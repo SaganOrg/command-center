@@ -121,7 +121,7 @@ export default function Home() {
         toast({
           variant: "destructive",
           title: "Authentication Error",
-          description: "An error occurred. Please try again.",
+          description: "Your account is pending approval. You will receive an email once approved. ",
         });
         // router.push("/login");
       }
