@@ -1,31 +1,13 @@
 'use server';
 
-const { createServerClient } = require('@supabase/ssr');
-const { cookies } = require('next/headers');
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+
 const { revalidatePath } = require('next/cache');
 
-// Initialize Supabase client
-const createSupabaseClient = () => {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-};
 
 // Fetch tags
 async function fetchTags(userData) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   let query = supabase.from('tags').select('*');
   if (userData.role === 'executive') {
     query = query.eq('executive_id', userData.id);
@@ -40,6 +22,9 @@ async function fetchTags(userData) {
 
 // Create or get tag
 async function getOrCreateTag(tagName, userData) {
+
+  const supabase = await createSupabaseServerClient()
+  
   const tags = await fetchTags(userData);
   const existingTag = tags.find((t) => t.name === tagName);
   if (existingTag) return existingTag.id;
@@ -51,7 +36,7 @@ async function getOrCreateTag(tagName, userData) {
     insertData = { ...insertData, assistant_id: userData.id, executive_id: userData.executive_id };
   }
 
-  const { data, error } = await createSupabaseClient()
+  const { data, error } = await supabase
     .from('tags')
     .insert(insertData)
     .select()
@@ -63,7 +48,7 @@ async function getOrCreateTag(tagName, userData) {
 
 // Update tag
 async function updateTag(tagId, newName) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   const { error } = await supabase.from('tags').update({ name: newName }).eq('id', tagId);
   if (error) throw new Error(`Error updating tag: ${error.message}`);
   revalidatePath('/library');
@@ -71,7 +56,7 @@ async function updateTag(tagId, newName) {
 
 // Delete tag
 async function deleteTag(tagId) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   const { error } = await supabase.from('tags').delete().eq('id', tagId);
   if (error) throw new Error(`Error deleting tag: ${error.message}`);
   revalidatePath('/library');
@@ -79,7 +64,7 @@ async function deleteTag(tagId) {
 
 // Fetch reference items
 async function fetchReferenceItems(userData) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   let query = supabase
     .from('reference_items')
     .select(
@@ -124,7 +109,7 @@ async function fetchReferenceItems(userData) {
 
 // Create reference item
  async function createReferenceItem(data, userData) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   if (!userData.id) throw new Error('No user logged in');
 
   const tableData = data.type === 'database' ? data.tableData : null;
@@ -196,7 +181,7 @@ async function fetchReferenceItems(userData) {
 
 // Update reference item
 async function updateReferenceItem(id, data, userData) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   if (!userData.id) throw new Error('No user logged in');
 
   const tableData = data.type === 'database' ? data.tableData : null;
@@ -262,7 +247,7 @@ async function updateReferenceItem(id, data, userData) {
 
 // Delete reference item
 async function deleteReferenceItem(id, userData) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   if (!userData.id) throw new Error('No user logged in');
 
   const { data: attachments } = await supabase
@@ -290,7 +275,7 @@ async function deleteReferenceItem(id, userData) {
 
 // Upload file
 async function uploadFile(file) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${file.name}`;
   const { data, error } = await supabase.storage
     .from('reference-attachments')
@@ -314,7 +299,7 @@ async function uploadFile(file) {
 
 // Delete file
 async function deleteFile(storagePath) {
-  const supabase = createSupabaseClient();
+  const supabase =await createSupabaseServerClient()
   const { error } = await supabase.storage
     .from('reference-attachments')
     .remove([storagePath]);
