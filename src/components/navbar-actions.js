@@ -1,30 +1,14 @@
 'use server';
 
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+
 const { createServerClient } = require('@supabase/ssr');
 const { cookies } = require('next/headers');
 
 // Initialize Supabase client
-const createSupabaseClient = () => {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-};
-
 // Check session and fetch user data
 async function checkSession() {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -48,7 +32,7 @@ async function checkSession() {
 
 // Sign out
 async function signOut() {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
 
   if (error) {
