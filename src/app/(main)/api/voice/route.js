@@ -3,12 +3,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createBrowserClient } from "@supabase/ssr";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 // Initialize Supabase client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -16,6 +13,7 @@ const openai = new OpenAI({
 });
 
 export async function POST(request) {
+  const supabase = await createSupabaseServerClient();
   try {
     const formData = await request.formData();
     const id = formData.get("userId");
@@ -73,8 +71,8 @@ export async function POST(request) {
     }
 
     // Convert Blob to File for OpenAI
-    const audioFile = new File([audioBlob], "recording.webm", {
-      type: "audio/webm",
+    const audioFile = new File([audioBlob], "recording", {
+      type: audioBlob.type,
     });
 
     // Transcribe audio with OpenAI Whisper
