@@ -135,6 +135,8 @@ export default function ProjectsClient({
       setRefreshKey((prev) => prev + 1); // Force re-render of ColumnCarousel
       const columnTitle =
         columns.find((col) => col.id === newStatus)?.title || newStatus;
+      
+      router.refresh();
       toast({
         title: 'Project moved',
         description: `Project moved to ${columnTitle}.`,
@@ -319,10 +321,11 @@ export default function ProjectsClient({
   };
 
   const handleAddComment = async (taskId, comment) => {
+    console.log('Adding comment for taskId:', taskId, 'selectedTask.id:', selectedTask?.id); // Debug
     try {
       setIsLoading(true);
-      const newComment = await addComment(taskId, comment, userId);
-
+      const newComment = await addComment(taskId, comment);
+      console.log('New comment:', newComment);
       setComments((prev) => [...prev, newComment]);
       toast({
         title: 'Comment added',

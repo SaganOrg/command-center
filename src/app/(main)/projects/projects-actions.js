@@ -133,9 +133,10 @@ async function deleteTask(taskId) {
 // }
 
 // Add comment
-async function addComment(taskId, comment, userId) {
+async function addComment(taskId, comment) {
   const supabase = createSupabaseClient();
-  const { data: user, error: userError } = await supabase.auth.getUser();
+  const { data:user, error: userError } = await supabase.auth.getUser();
+  // console.log(user);
   if (userError || !user) {
     throw new Error(userError?.message || 'Failed to authenticate user');
   }
@@ -143,15 +144,15 @@ async function addComment(taskId, comment, userId) {
   const { data: publicUser, error: publicError } = await supabase
     .from('users')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', user.user.id)
     .single();
   if (publicError) {
     throw new Error(publicError.message || 'Failed to fetch user data');
   }
-
+  console.log(user.user.id);
   const newComment = {
     task_id: taskId,
-    user_id: userId,
+    user_id: publicUser.id,
     content: comment.content || '',
     author_name: publicUser.full_name || publicUser.role,
   };
