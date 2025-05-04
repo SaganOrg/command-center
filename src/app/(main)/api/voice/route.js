@@ -71,9 +71,7 @@ export async function POST(request) {
     }
 
     // Convert Blob to File for OpenAI
-    const audioFile = new File([audioBlob], "recording", {
-      type: audioBlob.type,
-    });
+    const audioFile = new File([audioBlob], "recording.m4a", { type: "audio/m4a" });
 
     // Transcribe audio with OpenAI Whisper
     const transcriptionResponse = await openai.audio.transcriptions.create({
