@@ -157,8 +157,8 @@ export default function Home() {
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center animate-slide-up">
         <div className="md:w-1/2 text-center md:text-left">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight dark:text-foreground-dark">Master Your Projects Effortlessly</h2>
-          <p className="text-xl text-muted-foreground mb-8 dark:text-muted-foreground-dark">SoloSync provides intuitive tools to streamline project management for solo professionals and small teams.</p>
-          <a href="/signup" className="btn-primary">Try It Free</a>
+          <p className="text-xl text-muted-foreground mb-8 dark:text-muted-foreground-dark">Sagan command center provides intuitive tools to streamline project management for solo professionals and small teams.</p>
+          <a href="/login" className="btn-primary">Try It Free</a>
         </div>
         <div className="md:w-1/2 mt-10 md:mt-0 flex justify-center">
           <svg className="w-64 h-64 text-primary dark:text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default function Home() {
     {/* Why Use SoloSync Section */}
     <section id="why" className="py-20 bg-accent dark:bg-accent-dark">
       <div className="container mx-auto px-4">
-        <h3 className="text-3xl font-bold text-foreground text-center mb-12 dark:text-foreground-dark animate-fade-in">Why Choose SoloSync</h3>
+        <h3 className="text-3xl font-bold text-foreground text-center mb-12 dark:text-foreground-dark animate-fade-in">Why Choose Sagan Command Center</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { title: 'Solo-Optimized Design', desc: 'Tailored for individual professionals with a focus on simplicity and efficiency.', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -257,8 +257,8 @@ export default function Home() {
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center animate-slide-up">
         <div className="md:w-1/2 text-center md:text-left">
           <h3 className="text-3xl font-bold text-foreground mb-4 dark:text-foreground-dark">Manage Anywhere, Anytime</h3>
-          <p className="text-xl text-muted-foreground mb-8 dark:text-muted-foreground-dark">The SoloSync mobile app, available on the App Store, keeps your projects at your fingertips.</p>
-          <a href="https://apps.apple.com/app/solosync" target="_blank" className="btn-secondary">Download Now</a>
+          <p className="text-xl text-muted-foreground mb-8 dark:text-muted-foreground-dark">The Sagan Command Center mobile app, available on the App Store, keeps your projects at your fingertips.</p>
+          <a className="btn-secondary">Download Now</a>
         </div>
         <div className="md:w-1/2 mt-10 md:mt-0 flex justify-center">
           <svg className="w-64 h-64 text-secondary dark:text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,14 +294,14 @@ export default function Home() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h4 className="text-lg font-semibold mb-4">SoloSync</h4>
+            <h4 className="text-lg font-semibold mb-4">Sagan Command Center</h4>
             <p className="text-muted-foreground dark:text-muted-foreground-dark">Empowering solo professionals with efficient project management tools.</p>
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
               <li><a href="#features" className="text-muted-foreground hover:text-foreground transition dark:text-muted-foreground-dark dark:hover:text-foreground-dark">Features</a></li>
-              <li><a href="#why" className="text-muted-foreground hover:text-foreground transition dark:text-muted-foreground-dark dark:hover:text-foreground-dark">Why SoloSync</a></li>
+              <li><a href="#why" className="text-muted-foreground hover:text-foreground transition dark:text-muted-foreground-dark dark:hover:text-foreground-dark">Why Sagan Command Center</a></li>
               <li><a href="#mobile" className="text-muted-foreground hover:text-foreground transition dark:text-muted-foreground-dark dark:hover:text-foreground-dark">Mobile App</a></li>
             </ul>
           </div>
