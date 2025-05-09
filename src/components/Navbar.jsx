@@ -9,6 +9,8 @@ import {
   Settings,
   LogIn,
   LogOut,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -87,77 +90,16 @@ const Navbar = () => {
     };
 
     checkUserSession();
-
-    // Client-side auth state change listener (for real-time updates)
-    const eventSource = new EventSource('/api/auth-listener');
-    eventSource.onmessage = async (event) => {
-      const { event: authEvent, session } = JSON.parse(event.data);
-      console.log('Auth event:', authEvent, 'Session:', session ? 'Found' : 'Missing');
-      if (authEvent === 'SIGNED_OUT') {
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-        if (pathname !== '/login') {
-          router.push('/login');
-        }
-      } else if (session) {
-        try {
-          const { user } = await checkSession();
-          if (user.status === 'pending' || user.status === 'rejected') {
-            await signOut();
-            setIsLoggedIn(false);
-            setLoggedInUser(null);
-            toast({
-              variant: 'destructive',
-              title: 'Access Denied',
-              description: 'Please wait until your account is approved by an admin',
-            });
-            router.push('/login?error=account_pending');
-          } else {
-            setIsLoggedIn(true);
-            setLoggedInUser(user);
-          }
-        } catch (error) {
-          console.error('Error fetching user:', error);
-          setIsLoggedIn(false);
-          setLoggedInUser(null);
-          toast({
-            variant: 'destructive',
-            title: 'Access Denied',
-            description: 'User not found. Please contact support.',
-          });
-          router.push('/login?error=user_not_found');
-        }
-      } else {
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-        if (pathname !== '/login') {
-          router.push('/login');
-        }
-      }
-    };
-
-    eventSource.onerror = () => {
-      console.error('EventSource error');
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
   }, [pathname, router, toast]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      // Clear local storage explicitly
       localStorage.removeItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`);
-
       await signOut();
-
       setIsLoggedIn(false);
       setLoggedInUser(null);
-      // Use full page redirect to ensure fresh state
       window.location.href = '/login';
     } catch (error) {
       console.error('Logout error:', error);
@@ -171,6 +113,29 @@ const Navbar = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const renderMenuItems = (items) =>
+    items.map((item) => (
+      <Button
+        key={item.href}
+        variant="ghost"
+        size="sm"
+        className={cn(
+          'flex items-center w-full justify-start text-left',
+          pathname === item.href && 'bg-accent text-accent-foreground'
+        )}
+        asChild
+      >
+        <Link href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+          {item.icon}
+          <span>{item.label}</span>
+        </Link>
+      </Button>
+    ));
+
   return (
     <nav className="bg-background border-b border-border/30 py-2 px-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -178,92 +143,79 @@ const Navbar = () => {
           Sagan Command Center
         </Link>
         <div className="flex items-center">
-          <div className="flex space-x-1 mr-4">
-            {isLoggedIn && loggedInUser?.role === 'admin' && (
-              <>
-                {adminMenu.map((item) => (
-                  <Button
-                    key={item.href}
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      'flex items-center',
-                      pathname === item.href && 'bg-accent text-accent-foreground'
-                    )}
-                    asChild
-                  >
-                    <Link href={item.href}>
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
-                  </Button>
-                ))}
-              </>
-            )}
-            {isLoggedIn && loggedInUser?.role === 'executive' && (
-              <>
-                {privateMenuItems.map((item) => (
-                  <Button
-                    key={item.href}
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      'flex items-center',
-                      pathname === item.href && 'bg-accent text-accent-foreground'
-                    )}
-                    asChild
-                  >
-                    <Link href={item.href}>
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
-                  </Button>
-                ))}
-              </>
-            )}
-            {isLoggedIn && loggedInUser?.role === 'assistant' && (
-              <>
-                {privateAssistantItems.map((item) => (
-                  <Button
-                    key={item.href}
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      'flex items-center',
-                      pathname === item.href && 'bg-accent text-accent-foreground'
-                    )}
-                    asChild
-                  >
-                    <Link href={item.href}>
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
-                  </Button>
-                ))}
-              </>
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-1 mr-4">
+            {isLoggedIn && loggedInUser?.role === 'admin' && renderMenuItems(adminMenu)}
+            {isLoggedIn && loggedInUser?.role === 'executive' && renderMenuItems(privateMenuItems)}
+            {isLoggedIn && loggedInUser?.role === 'assistant' && renderMenuItems(privateAssistantItems)}
+          </div>
+          {/* Desktop Login/Logout Button */}
+          <div className="hidden md:flex">
+            {isLoggedIn && loggedInUser?.role ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center mx-2"
+                disabled={isLoggingOut}
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="flex items-center mx-2">
+                <Link href="/login" className="flex justify-center items-center">
+                  <LogIn className="h-4 w-4 mr-1" />
+                  <span>Login / Signup</span>
+                </Link>
+              </Button>
             )}
           </div>
-          {isLoggedIn && loggedInUser?.role ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="flex items-center mx-2"
-              disabled={isLoggingOut}
-            >
-              <LogOut className="h-4 w-4 mr-1" />
-              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="flex items-center mx-2">
-              <Link href="/login" className="flex justify-center items-center">
-                <LogIn className="h-4 w-4 mr-1" />
-                <span>Login / Signup</span>
-              </Link>
-            </Button>
-          )}
+          {/* Mobile Hamburger Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={toggleMobileMenu}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
         </div>
       </div>
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-background border-t border-border/30 py-4 px-4">
+          <div className="flex flex-col space-y-2">
+            {isLoggedIn && loggedInUser?.role === 'admin' && renderMenuItems(adminMenu)}
+            {isLoggedIn && loggedInUser?.role === 'executive' && renderMenuItems(privateMenuItems)}
+            {isLoggedIn && loggedInUser?.role === 'assistant' && renderMenuItems(privateAssistantItems)}
+            {isLoggedIn && loggedInUser?.role ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center justify-start"
+                disabled={isLoggingOut}
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="flex items-center justify-start">
+                <Link
+                  href="/login"
+                  className="flex justify-center items-center w-full"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <LogIn className="h-4 w-4 mr-1" />
+                  <span>Login / Signup</span>
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

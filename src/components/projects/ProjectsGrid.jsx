@@ -32,7 +32,7 @@ const ProjectsGrid = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex-col md:flex md:flex-row justify-between items-center">
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="all" className="flex-1">All</TabsTrigger>

@@ -1,12 +1,8 @@
 'use server';
 
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-
-const { createServerClient } = require('@supabase/ssr');
 const { cookies } = require('next/headers');
 
-// Initialize Supabase client
-// Check session and fetch user data
 async function checkSession() {
   const supabase = await createSupabaseServerClient();
   const {
