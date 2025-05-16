@@ -137,9 +137,9 @@ const Navbar = () => {
     ));
 
   return (
-    <nav className="bg-background border-b border-border/30 py-2 px-4">
+    <nav className="bg-white/80 border-b border-border/30 py-4 px-6 backdrop-blur-md fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="font-medium text-lg">
+        <Link href="/" className=" text-2xl font-semibold">
           Sagan Command Center
         </Link>
         <div className="flex items-center">
@@ -153,8 +153,8 @@ const Navbar = () => {
           <div className="hidden md:flex">
             {isLoggedIn && loggedInUser?.role ? (
               <Button
-                variant="outline"
-                size="sm"
+                variant="default"
+                size="lg"
                 onClick={handleLogout}
                 className="flex items-center mx-2"
                 disabled={isLoggingOut}
@@ -163,7 +163,7 @@ const Navbar = () => {
                 <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" className="flex items-center mx-2">
+              <Button variant="default" size="lg" className="flex items-center mx-2">
                 <Link href="/login" className="flex justify-center items-center">
                   <LogIn className="h-4 w-4 mr-1" />
                   <span>Login / Signup</span>
@@ -192,17 +192,17 @@ const Navbar = () => {
             {isLoggedIn && loggedInUser?.role === 'assistant' && renderMenuItems(privateAssistantItems)}
             {isLoggedIn && loggedInUser?.role ? (
               <Button
-                variant="outline"
-                size="sm"
+                variant="default"
+                size="lg"
                 onClick={handleLogout}
-                className="flex items-center justify-start"
+                className="flex items-center justify-start "
                 disabled={isLoggingOut}
               >
                 <LogOut className="h-4 w-4 mr-1" />
                 <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" className="flex items-center justify-start">
+              <Button variant="default" size="lg" className="flex items-center justify-start ">
                 <Link
                   href="/login"
                   className="flex justify-center items-center w-full"

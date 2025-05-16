@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
             <Sonner />
             <div className="min-h-screen flex flex-col">
               <Navbar />
-              <main className="flex-1 pt-6 pb-6">
+              <main className="flex-1">
                 {" "}
                 {/* Increased bottom padding further */}
                 <AnimatePresence >{children}</AnimatePresence>

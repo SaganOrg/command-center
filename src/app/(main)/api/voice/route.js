@@ -1,11 +1,7 @@
-// app/api/transcribe-and-task/route.js
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import OpenAI from "openai";
-import { createBrowserClient } from "@supabase/ssr";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-// Initialize Supabase client
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 // Initialize OpenAI client
 const openai = new OpenAI({

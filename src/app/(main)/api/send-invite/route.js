@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from "@supabase/ssr";
 
 // Initialize Supabase client
