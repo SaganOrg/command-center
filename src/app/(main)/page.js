@@ -67,7 +67,7 @@ export default function Home() {
       <HeroNew />
       <NewFeatures />
       <DeviceAvailability />
-      <TestimonialsNew />
+      {/* <TestimonialsNew /> */}
 
  
 <FooterNew />
