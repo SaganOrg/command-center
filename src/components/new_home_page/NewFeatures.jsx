@@ -2,11 +2,11 @@ import React from "react";
 import { Calendar, CheckSquare, FileText, MessageSquare, Plus, Smartphone, Users } from "lucide-react";
 
 const featureItems = [
-  {
-    title: "AI Assistant Integration",
-    description: "Smart AI assistants help manage tasks, provide insights, and automate routine work to increase your productivity.",
-    icon: <Users className="h-12 w-12 text-brand-purple" />,
-  },
+  // {
+  //   title: "AI Assistant Integration",
+  //   description: "Smart AI assistants help manage tasks, provide insights, and automate routine work to increase your productivity.",
+  //   icon: <Users className="h-12 w-12 text-brand-purple" />,
+  // },
   {
     title: "Comprehensive Task Management",
     description: "Create, assign, and track tasks with ease. Both users and AI assistants can see and collaborate on tasks.",

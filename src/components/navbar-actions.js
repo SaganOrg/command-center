@@ -15,7 +15,7 @@ async function checkSession() {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, role, status, assistant_id')
+    .select('id, email, role, status, assistant_id, admin')
     .eq('id', session.user.id)
     .single();
 

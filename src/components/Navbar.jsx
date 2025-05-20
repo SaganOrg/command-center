@@ -21,11 +21,11 @@ import { checkSession, signOut } from './navbar-actions';
 
 const adminMenu = [
   { href: '/admin', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Dashboard' },
-  { href: '/voice', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Voice Input' },
-  { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
-  { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
-  { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
-  { href: '/settings', icon: <Settings className="h-4 w-4 mr-1" />, label: 'Settings' },
+  // { href: '/voice', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Voice Input' },
+  // { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
+  // { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
+  // { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
+  // { href: '/settings', icon: <Settings className="h-4 w-4 mr-1" />, label: 'Settings' },
 ];
 
 const privateMenuItems = [
@@ -75,6 +75,7 @@ const Navbar = () => {
         } else {
           setIsLoggedIn(true);
           setLoggedInUser(user);
+          console.log(user)
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -145,7 +146,7 @@ const Navbar = () => {
         <div className="flex items-center">
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-1 mr-4">
-            {isLoggedIn && loggedInUser?.role === 'admin' && renderMenuItems(adminMenu)}
+            {isLoggedIn && loggedInUser?.admin == true && renderMenuItems(adminMenu)}
             {isLoggedIn && loggedInUser?.role === 'executive' && renderMenuItems(privateMenuItems)}
             {isLoggedIn && loggedInUser?.role === 'assistant' && renderMenuItems(privateAssistantItems)}
           </div>
