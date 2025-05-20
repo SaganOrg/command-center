@@ -1,6 +1,8 @@
+"use client"
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from 'next/link';
 
 const HeroNew = () => {
   return (
@@ -22,9 +24,9 @@ const HeroNew = () => {
               daily reports and seamless file attachments. All in one powerful platform.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-              <Button className="btn-primary text-lg flex items-center gap-2 px-8 py-6">
+              <Link href="/login" className="btn-primary text-lg flex items-center gap-2 px-8 py-4">
                 Start for free <ArrowRight className="h-5 w-5 ml-1" />
-              </Button>
+              </Link>
               {/* <Button variant="outline" className="btn-secondary text-lg px-8 py-6">
                 Book a demo
               </Button> */}
