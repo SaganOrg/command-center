@@ -379,7 +379,7 @@ const Reports = () => {
         title: "Deletion Not Allowed",
         description: "Executives with an assigned assistant cannot be deleted. Please contact the developer.",
       });
-      setDeleteDialogOpen(null);
+      setDeleteDialogOpen(null)      ;
       return;
     }
 
