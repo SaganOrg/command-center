@@ -20,24 +20,35 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { AlertCircle, Search, Edit } from "lucide-react";
+import { AlertCircle, Search, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { createBrowserClient } from "@supabase/ssr";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SERVICE_KEY
 );
 
 const Reports = () => {
@@ -48,9 +59,10 @@ const Reports = () => {
   const [executiveId, setExecutiveId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [userAdmin, setUserAdmin] = useState(null); // New state for user.admin
+  const [userAdmin, setUserAdmin] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
   const [editingId, setEditingId] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(null); // State for delete confirmation dialog
   const { toast } = useToast();
   const router = useRouter();
 
@@ -132,7 +144,7 @@ const Reports = () => {
           description: "Failed to authenticate user. Please log in again.",
           duration: 3000,
         });
-        router.push("/"); // Redirect to home page on auth error
+        router.push("/");
         return;
       }
       if (user) {
@@ -149,7 +161,7 @@ const Reports = () => {
             description: "Failed to authenticate user. Please log in again.",
             duration: 3000,
           });
-          router.push("/"); // Redirect to home page on error
+          router.push("/");
           return;
         }
         if (publicUser) {
@@ -157,8 +169,7 @@ const Reports = () => {
           setExecutiveId(ownerId || null);
           setUserRole(publicUser.role);
           setUserAdmin(publicUser.admin);
-          console.log("Authenticated user role:", publicUser.role, "admin:", publicUser.admin); // Debug log
-          // Check if user is admin or has admin=true
+          console.log("Authenticated user role:", publicUser.role, "admin:", publicUser.admin);
           if (publicUser.role !== "admin" && !publicUser.admin) {
             toast({
               variant: "destructive",
@@ -166,7 +177,7 @@ const Reports = () => {
               description: "Only admins or users with admin status can access this page.",
               duration: 3000,
             });
-            router.push("/"); // Redirect to home page
+            router.push("/");
             return;
           }
         }
@@ -178,7 +189,7 @@ const Reports = () => {
           description: "No authenticated user found. Please log in.",
           duration: 3000,
         });
-        router.push("/"); // Redirect to home page
+        router.push("/");
       }
     };
     fetchUser();
@@ -223,7 +234,7 @@ const Reports = () => {
   // Handle status update with email notification
   const updateStatus = async (userId, newStatus) => {
     if (userRole !== "executive" && userRole !== "admin") {
-      console.log("Status update blocked: User role is", userRole); // Debug log
+      console.log("Status update blocked: User role is", userRole);
       toast({
         variant: "destructive",
         title: "Permission Denied",
@@ -273,7 +284,7 @@ const Reports = () => {
   // Handle role update
   const updateRole = async (userId, newRole) => {
     if (userRole !== "admin") {
-      console.log("Role update blocked: User role is", userRole); // Debug log
+      console.log("Role update blocked: User role is", userRole);
       toast({
         variant: "destructive",
         title: "Permission Denied",
@@ -311,16 +322,6 @@ const Reports = () => {
 
   // Handle admin status update
   const updateAdminStatus = async (userId, isAdmin) => {
-    // if (userRole !== "admin") {
-    //   console.log("Admin status update blocked: User role is", userRole); // Debug log
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Permission Denied",
-    //     description: "Only admins can update admin status.",
-    //   });
-    //   return;
-    // }
-
     const { data, error } = await supabase
       .from("users")
       .update({ admin: isAdmin })
@@ -346,6 +347,80 @@ const Reports = () => {
       );
       setEditingId(null);
     }
+  };
+
+  // Handle user deletion
+  const deleteUser = async (userId) => {
+    if (userRole !== "admin" && !userAdmin) {
+      console.log("Delete blocked: User role is", userRole, "admin:", userAdmin);
+      toast({
+        variant: "destructive",
+        title: "Permission Denied",
+        description: "Only admins can delete users.",
+      });
+      return;
+    }
+
+    const userToDelete = reports.find((report) => report.id === userId);
+
+    if (userToDelete.role === "assistant") {
+      toast({
+        variant: "destructive",
+        title: "Deletion Not Allowed",
+        description: "Assistants cannot be deleted right now. Please contact an admin.",
+      });
+      setDeleteDialogOpen(null);
+      return;
+    }
+
+    if (userToDelete.role === "executive" && userToDelete.assistant_id) {
+      toast({
+        variant: "destructive",
+        title: "Deletion Not Allowed",
+        description: "Executives with an assigned assistant cannot be deleted. Please contact the developer.",
+      });
+      setDeleteDialogOpen(null);
+      return;
+    }
+
+    // Delete from users table
+    const { error: userError } = await supabase
+      .from("users")
+      .delete()
+      .eq("id", userId);
+
+    if (userError) {
+      console.error("Error deleting user from users table:", userError);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete user from users table.",
+      });
+      setDeleteDialogOpen(null);
+      return;
+    }
+
+    // Delete from Supabase auth
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+    if (authError) {
+      console.error("Error deleting user from auth:", authError);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete user from authentication.",
+      });
+      setDeleteDialogOpen(null);
+      return;
+    }
+
+    // Update local state
+    setReports((prevReports) => prevReports.filter((report) => report.id !== userId));
+    toast({
+      title: "Success",
+      description: "User deleted successfully.",
+    });
+    setDeleteDialogOpen(null);
   };
 
   // Filter reports based on search term and active tab
@@ -549,7 +624,8 @@ const Reports = () => {
                               </TableCell>
                               <TableCell>
                                 {(userRole === "executive" ||
-                                  userRole === "admin") && (
+                                  userRole === "admin" ||
+                                  userAdmin) && (
                                   <>
                                     {editingId !== report.id ? (
                                       <div className="flex gap-2">
@@ -592,6 +668,43 @@ const Reports = () => {
                                           <Edit className="h-4 w-4" />
                                           <span>Edit</span>
                                         </Button>
+                                        <AlertDialog
+                                          open={deleteDialogOpen === report.id}
+                                          onOpenChange={(open) =>
+                                            setDeleteDialogOpen(open ? report.id : null)
+                                          }
+                                        >
+                                          <AlertDialogTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="flex items-center gap-1 text-red-600 hover:text-red-800"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                              <span>Delete</span>
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>
+                                                Confirm Deletion
+                                              </AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                Are you sure you want to delete this user? This action cannot be undone.
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>
+                                                Cancel
+                                              </AlertDialogCancel>
+                                              <AlertDialogAction
+                                                onClick={() => deleteUser(report.id)}
+                                              >
+                                                Delete
+                                              </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
                                       </div>
                                     ) : (
                                       <div className="flex flex-col gap-2">
@@ -623,49 +736,6 @@ const Reports = () => {
                                           </Button>
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                          {/* Commented out role update buttons as per provided code */}
-                                          {/* <div className="flex gap-2">
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                updateRole(report.id, "admin")
-                                              }
-                                              disabled={report.role === "admin"}
-                                            >
-                                              Set Admin Role
-                                            </Button>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                updateRole(
-                                                  report.id,
-                                                  "executive"
-                                                )
-                                              }
-                                              disabled={
-                                                report.role === "executive"
-                                              }
-                                            >
-                                              Set Executive Role
-                                            </Button>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                updateRole(
-                                                  report.id,
-                                                  "assistant"
-                                                )
-                                              }
-                                              disabled={
-                                                report.role === "assistant"
-                                              }
-                                            >
-                                              Set Assistant Role
-                                            </Button>
-                                          </div> */}
                                           <div className="flex gap-2">
                                             <Button
                                               variant="outline"
