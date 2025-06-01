@@ -49,8 +49,8 @@ export default function PrivacyPolicy() {
 
         <h2 class="text-2xl font-semibold mt-6">8. Contact Us</h2>
         <p class="mb-4">If you have questions about this Privacy Policy, please contact us at:</p>
-        <p class="mb-4">Email: <a href="mailto:privacy@example.com" class="text-blue-600 hover:underline">privacy@example.com</a><br />
-        Address: 1234 Example Street, Suite 567, City, Country</p>
+        <p class="mb-4">Email: <a href="mailto:privacy@example.com" class="text-blue-600 hover:underline">support@getsagan.com</a><br />
+        1309 Coffeen Avenue STE 1200, Sheridan, WY 82801</p>
 
         <div class="mt-8 text-sm text-gray-500">
             <p>© 2025 Example Company. All rights reserved.</p>
