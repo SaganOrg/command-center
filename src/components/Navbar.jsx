@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
   ListChecks,
@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,14 @@ const Navbar = () => {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'Welcome to Sagan Command Center!' },
+    { id: 2, message: 'Your report was approved.' },
+  ]);
   const { toast } = useToast();
+  const notificationRef = useRef(null);
+  const bellRef = useRef(null);
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -75,7 +83,7 @@ const Navbar = () => {
         } else {
           setIsLoggedIn(true);
           setLoggedInUser(user);
-          console.log(user)
+          console.log(user);
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -137,6 +145,24 @@ const Navbar = () => {
       </Button>
     ));
 
+  useEffect(() => {
+    if (!isNotificationOpen) return;
+
+    function handleClickOutside(event) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target) &&
+        bellRef.current &&
+        !bellRef.current.contains(event.target)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isNotificationOpen]);
+
   return (
     <nav className="bg-white/80 border-b border-border/30 py-4 px-6 backdrop-blur-md fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
@@ -172,6 +198,24 @@ const Navbar = () => {
               </Button>
             )}
           </div>
+          {/* Notification Button - Only for logged in users */}
+          {/* {isLoggedIn && (
+            <Button
+              ref={bellRef}
+              variant="ghost"
+              size="icon"
+              className="relative mx-2"
+              onClick={() => setIsNotificationOpen((open) => !open)}
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {notifications.length > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                  {notifications.length}
+                </span>
+              )}
+            </Button>
+          )} */}
           {/* Mobile Hamburger Button */}
           <Button
             variant="ghost"
@@ -215,6 +259,26 @@ const Navbar = () => {
               </Button>
             )}
           </div>
+        </div>
+      )}
+      {/* Notification Dropdown - Only for logged in users */}
+      {isLoggedIn && isNotificationOpen && (
+        <div
+          ref={notificationRef}
+          className="absolute right-4 mt-2 w-80 bg-white border border-border/30 rounded-lg shadow-lg z-50"
+        >
+          <div className="p-4 border-b font-semibold">Notifications</div>
+          <ul className="max-h-64 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <li className="p-4 text-center text-muted-foreground">No notifications</li>
+            ) : (
+              notifications.map((n) => (
+                <li key={n.id} className="p-4 border-b last:border-b-0 hover:bg-accent/20">
+                  {n.message}
+                </li>
+              ))
+            )}
+          </ul>
         </div>
       )}
     </nav>

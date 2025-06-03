@@ -77,18 +77,19 @@ export async function POST(request) {
 
     const emailData = {
       sender: {
-        name: "Sagan",
-        email: "jon@getsagan.com",
+        name: "Command Center Team",
+        email: "success@cc.getsagan.com",
       },
-      to: [{ email, name: "Recipient Name" }],
-      subject: "You’ve Been Invited to Join the Command Center",
+      to: [{ email, name: "Sagan" }],
+      subject: "Your Invitation to Join the Command Center",
       htmlContent: `
-        <p>Hi,</p>
-        <p>You have been invited to join the Command Center as an Executive Assistant.</p>
-        <p>Click the link below to create your account and get started:</p>
-        <p><a href="${signupLink}">${signupLink}</a></p>
-        <p>Looking forward to having you on board.</p>
-        <p>Best regards,<br>Your Team</p>
+     <h1>Welcome to the Command Center</h1>
+<p>Hi,</p>
+<p>We’re excited to invite you to join the Command Center as an Executive Assistant.</p>
+<p>Please use the link below to set up your account:</p>
+<p><a href="${signupLink}" target="_blank">Set Up Your Account</a></p>
+<p>We look forward to working with you!</p>
+<p>Best,<br>Your Team at Command Center</p>
       `,
     };
 
