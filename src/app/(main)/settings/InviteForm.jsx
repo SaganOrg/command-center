@@ -109,7 +109,7 @@ export default function InviteForm({ userRole, userId, assistant }) {
                     <CardTitle>Share Account</CardTitle>
                   </div>
                   <CardDescription>
-                    Invite team members to collaborate with you
+                    Invite your Executive Assistant to collaborate with you
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
