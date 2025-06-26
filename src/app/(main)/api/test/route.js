@@ -1,114 +1,115 @@
-import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from "next/server";
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabase = createClient(
-    "https://wiwfkcbcplgrbqhjaqbx.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpd2ZrY2JjcGxncmJxaGphcWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1Njk3NjgsImV4cCI6MjA2MzE0NTc2OH0.WjCMyKNWK8mxsE0W9SWJ8uq6mbcPj9HqE_toFv8_mvg"
+// Initialize Supabase client
+const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const client = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY });
+// Function to update candidate embeddings
+async function updateCandidateEmbeddings(request) {
+    try {
+        // Parse incoming request for executive_id and assistant_id
+        const { executive_id, assistant_id } = await request.json();
 
-async function generateEmbedding(text) {
-    console.log('Generating embedding with model: text-embedding-3-small');
-    const response = await client.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: text,
-    });
-    const embedding = response.data[0].embedding;
-    console.log(`Generated embedding length: ${embedding.length}`);
-    return embedding;
-}
+        // UUID validation function
+        const isValidUuid = (str) => {
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            return uuidRegex.test(str);
+        };
 
-// async function updateCandidateEmbeddings() {
-//     const { data: candidates, error } = await supabase
-//         .from('documents')
-//         .select('*')
-//         .is('embedding', null);
-
-//     if (error) {
-//         console.error('Error fetching candidates:', error);
-//         return;
-//     }
-
-//     for (const candidate of candidates) {
-//         const profileText = `${candidate.candidate_bio} ${candidate.candidate_job_title} ${candidate.industry} ${candidate.job_roles}`;
-//         const embedding = await generateEmbedding(profileText);
-//         const { error: updateError } = await supabase
-//             .from('documents')
-//             .update({ embedding: embedding })
-//             .eq('id', candidate.id);
-//         if (updateError) {
-//             console.error('Error updating embedding:', updateError);
-//         } else {
-//             console.log(`Updated embedding for ${candidate.persons_name}`);
-//         }
-//     }
-// }
-
-
-async function updateCandidateEmbeddings() {
-    // Fetch rows where embedding is null, selecting all columns
-    const { data: candidates, error } = await supabase
-        .from('documents')
-        .select('*')
-        .is('embedding', null);
-
-    if (error) {
-        console.error('Error fetching candidates:', error);
-        return;
-    }
-
-    for (const candidate of candidates) {
-        // Construct metadata JSON object from all columns, excluding id and embedding
-        const metadata = { ...candidate };
-        delete metadata.id;
-        delete metadata.embedding;
-
-        // Generate profile text for embedding from specific metadata fields
-        const profileText = `${metadata.candidate_bio || ''} ${metadata.candidate_job_title || ''} ${metadata.industry || ''} ${metadata.job_roles || ''} ${metadata.desired_rate}`;
-
-        // Generate embedding
-        const embedding = await generateEmbedding(profileText);
-
-        // Update the row with metadata and embedding
-        const { error: updateError } = await supabase
-            .from('documents')
-            .update({
-                metadata: metadata,
-                embedding: embedding
-            })
-            .eq('id', candidate.id);
-
-        if (updateError) {
-            console.error('Error updating metadata and embedding:', updateError);
-        } else {
-            console.log(`Updated metadata and embedding for ${metadata.persons_name || 'candidate ID ' + candidate.id}`);
+        // Validate UUIDs
+        if (!executive_id || !assistant_id || !isValidUuid(executive_id) || !isValidUuid(assistant_id)) {
+            return NextResponse.json(
+                { error: "Invalid or missing executive_id or assistant_id" },
+                { status: 400 }
+            );
         }
+
+        // Fetch user data from users table
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', executive_id)
+            .single();
+
+        // Check for user fetch errors
+        if (userError || !user) {
+            return NextResponse.json(
+                { error: userError?.message || "User not found" },
+                { status: 400 }
+            );
+        }
+
+        // Update assistant_id to null in users table
+        const { error: userUpdateError } = await supabase
+            .from('users')
+            .update({ assistant_id: null })
+            .eq('id', executive_id);
+
+        if (userUpdateError) {
+            return NextResponse.json(
+                { error: userUpdateError.message },
+                { status: 500 }
+            );
+        }
+
+        // Update tasks table: set assigned_to to null where created_by matches executive_id
+        const { data: tasks, error: tasksError } = await supabase
+            .from('tasks')
+            .update({ assigned_to: null })
+            .eq('created_by', executive_id);
+
+        if (tasksError) {
+            return NextResponse.json(
+                { error: tasksError.message },
+                { status: 500 }
+            );
+        }
+
+        // Update reports table: set assistant_id to null where created_by matches executive_id
+        const { data: reports, error: reportsError } = await supabase
+            .from('reports')
+            .update({ assistant_id: null })
+            .eq('executive_id', executive_id);
+
+        if (reportsError) {
+            return NextResponse.json(
+                { error: reportsError.message },
+                { status: 500 }
+            );
+        }
+
+        // Return success response
+        return NextResponse.json(
+            { message: "Assistant ID successfully removed from users, tasks, and reports" },
+            { status: 200 }
+        );
+    } catch (error) {
+        // Catch any unexpected errors
+        return NextResponse.json(
+            { error: "Internal server error: " + error.message },
+            { status: 500 }
+        );
     }
 }
 
-
-
+// Next.js API route handler
 export async function POST(request) {
-  try {
-        updateCandidateEmbeddings();
-
-//       const embeddings = await generateEmbedding("Hiring 1 part-time Review Sales Representative for Roof US $10/review commission, LatAm/CEE, Mon/Wed 2-6 PM, Sat 12-4 PM CST, requires English (50), skills (30), low salary (20), using OpenPhone, Gmail, Google Sheets, seeking friendly, reliable candidate with clear English, customer service experience preferred, 2-4 week recruitment, email intro, review interview recording, prefers sweet personality.  The representatives salary will be more than $3000.")
-      
-// const { data, error } = await supabase.functions.invoke('bright-action', {
-//   body: { query: "Hiring 1 part-time Review Sales Representative for Roof US $10/review commission, LatAm/CEE, Mon/Wed 2-6 PM, Sat 12-4 PM CST, requires English (50), skills (30), low salary (20), using OpenPhone, Gmail, Google Sheets, seeking friendly, reliable candidate with clear English, customer service experience preferred, 2-4 week recruitment, email intro, review interview recording, prefers sweet personality.  The representatives salary will be more than $3000." },
-// })
-//       return NextResponse.json(
-//           //   { error: 'Failed to send invitation.' },
-//           data
-//     //   { status: 400 }
-//     );
-  } catch (error) {
-    console.error('Error deleting task:', error);
-    return NextResponse.json(
-      { error: 'Failed to send invitation.' },
-    //   { status: 400 }
-    );
-  }
+    try {
+        const response = await updateCandidateEmbeddings(request);
+        if (!response) {
+            return NextResponse.json(
+                { error: "No response from updateCandidateEmbeddings" },
+                { status: 500 }
+            );
+        }
+        return response;
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Internal server error in POST handler: " + error.message },
+            { status: 500 }
+        );
+    }
 }

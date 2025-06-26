@@ -31,7 +31,7 @@ async function loginWithEmail(email, password) {
   });
 
   if (error) {
-    throw new Error(error.message || 'Login failed. Please try again.');
+    throw new Error( 'Login failed. Please try again.');
   }
 
   return { session: data.session, user: data.user };
@@ -46,7 +46,7 @@ async function signupWithEmail(email, password, name) {
   });
 
   if (error) {
-    throw new Error(error.message || 'Signup failed. Please try again.');
+    throw new Error( 'Signup failed. Please try again.');
   }
 
   if (data.user) {
@@ -90,7 +90,7 @@ async function resetPassword(email) {
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to send reset email. Please try again.');
+    throw new Error( 'Failed to send reset email. Please try again.');
   }
 
   return { message: 'Password reset email sent! Check your inbox.' };

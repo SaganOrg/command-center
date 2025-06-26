@@ -198,6 +198,16 @@ async function deleteComment(commentId) {
   }
 }
 
+async function createNotification({ recipient_id, sender_id, title, message }) {
+  const supabase = createSupabaseClient();
+  const { error } = await supabase
+    .from('notifications')
+    .insert([{ recipient_id, sender_id, title, message }]);
+  if (error) throw new Error(error.message || 'Failed to create notification');
+}
+
+
+
 export{
   updateTaskStatus,
   reorderTasks,
@@ -207,4 +217,5 @@ export{
   addComment,
   editComment,
   deleteComment,
+  createNotification
 };

@@ -19,14 +19,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { checkSession, signOut } from './navbar-actions';
+import { createBrowserClient } from '@supabase/ssr';
 
 const adminMenu = [
   { href: '/admin', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Dashboard' },
-  // { href: '/voice', icon: <Mic className="h-4 w-4 mr-1" />, label: 'Voice Input' },
-  // { href: '/projects', icon: <ListChecks className="h-4 w-4 mr-1" />, label: 'Project Board' },
-  // { href: '/reports', icon: <ClipboardList className="h-4 w-4 mr-1" />, label: 'Reports' },
-  // { href: '/attachments', icon: <BookOpen className="h-4 w-4 mr-1" />, label: 'Reference' },
-  // { href: '/settings', icon: <Settings className="h-4 w-4 mr-1" />, label: 'Settings' },
 ];
 
 const privateMenuItems = [
@@ -52,12 +48,32 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 1, message: 'Welcome to Sagan Command Center!' },
-    { id: 2, message: 'Your report was approved.' },
   ]);
   const { toast } = useToast();
   const notificationRef = useRef(null);
   const bellRef = useRef(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  useEffect(() => {
+  if (!isLoggedIn || !loggedInUser?.id) return;
+
+  async function fetchInitial() {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('recipient_id', loggedInUser.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setNotifications(data);
+    }
+  }
+  fetchInitial();
+}, [isLoggedIn, loggedInUser?.id]);
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -99,6 +115,37 @@ const Navbar = () => {
     };
 
     checkUserSession();
+
+       if (!isLoggedIn || !loggedInUser?.id) return;
+
+    const channel = supabase
+  .channel('notifications-channel')
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'notifications',
+      filter: `recipient_id=eq.${loggedInUser.id}`,
+    },
+    (payload) => {
+      const newNotification = payload.new;
+      setNotifications((prev) => [
+        ...prev,
+        {
+          id: newNotification.id,
+          message: newNotification.message,
+          title: newNotification.title,
+          seen: newNotification.seen,
+        },
+      ]);
+    }
+  )
+  .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [pathname, router, toast]);
 
   const handleLogout = async () => {
@@ -199,7 +246,7 @@ const Navbar = () => {
             )}
           </div>
           {/* Notification Button - Only for logged in users */}
-          {/* {isLoggedIn && (
+          {isLoggedIn && (
             <Button
               ref={bellRef}
               variant="ghost"
@@ -211,11 +258,11 @@ const Navbar = () => {
               <Bell className="h-5 w-5" />
               {notifications.length > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                  {notifications.length}
+                 {notifications.filter((n) => !n.seen).length}
                 </span>
               )}
             </Button>
-          )} */}
+          )}
           {/* Mobile Hamburger Button */}
           <Button
             variant="ghost"
@@ -273,9 +320,27 @@ const Navbar = () => {
               <li className="p-4 text-center text-muted-foreground">No notifications</li>
             ) : (
               notifications.map((n) => (
-                <li key={n.id} className="p-4 border-b last:border-b-0 hover:bg-accent/20">
-                  {n.message}
-                </li>
+                <li
+  key={n.id}
+  className={cn(
+    'p-4 border-b last:border-b-0 cursor-pointer hover:bg-accent/20',
+    !n.seen && 'bg-muted/20 font-semibold'
+  )}
+  onClick={async () => {
+    setIsNotificationOpen(false);
+    await fetch('/api/notifications/markAsSeen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationId: n.id, userId: loggedInUser?.id }),
+    });
+    setNotifications((prev) =>
+      prev.map((noti) => (noti.id === n.id ? { ...noti, seen: true } : noti))
+    );
+  }}
+>
+  <p className="text-sm">{n.title}</p>
+  <p className="text-xs text-muted-foreground">{n.message}</p>
+</li>
               ))
             )}
           </ul>

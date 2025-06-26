@@ -40,8 +40,20 @@ import {
   addComment,
   editComment,
   deleteComment,
+  createNotification
 } from './projects-actions';
 import { createBrowserClient } from '@supabase/ssr';
+
+// async function createNotification({ recipient_id, sender_id, type, title, message }) {
+//   const supabase = createBrowserClient(
+//     process.env.NEXT_PUBLIC_SUPABASE_URL,
+//     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+//   );
+//   const { error } = await supabase
+//     .from('notifications')
+//     .insert([{ recipient_id, sender_id, type, title, message }]);
+//   if (error) throw new Error(error.message || 'Failed to create notification');
+// }
 
 export default function ProjectsClient({
   userRole,
@@ -50,7 +62,6 @@ export default function ProjectsClient({
   comments: initialComments,
   users,
 }) {
-
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -126,6 +137,35 @@ export default function ProjectsClient({
     try {
       setIsLoading(true);
       await updateTaskStatus(taskId, newStatus);
+      
+
+      // Find the task to get its details
+      const task = tasks.reduce((found, t) => (t.id == taskId ? t : found), null);
+      const columnTitle =
+        columns.find((col) => col.id === newStatus)?.title || newStatus;
+        console.log(task)
+
+      // Create notification for the assigned user (if any)
+      if (task?.assigned_to) {
+        if(userRole=== 'assistant') {
+console.log(task?.assigned_to)
+        await createNotification({
+          recipient_id: userId,
+          sender_id: task.assigned_to,
+          title: `Project Status Updated: ${task.title}`,
+          message: `The project "${task.title}" has been moved to ${columnTitle} }.`,
+        });
+        } else {
+          console.log(task?.assigned_to)
+        await createNotification({
+          recipient_id: task.assigned_to,
+          sender_id: userId,
+          title: `Project Status Updated: ${task.title}`,
+          message: `The project "${task.title}" has been moved to ${columnTitle} }.`,
+        });
+        }
+        
+      }
 
       setTasks((prev) =>
         prev.map((task) =>
@@ -133,8 +173,6 @@ export default function ProjectsClient({
         )
       );
       setRefreshKey((prev) => prev + 1); // Force re-render of ColumnCarousel
-      const columnTitle =
-        columns.find((col) => col.id === newStatus)?.title || newStatus;
       
       router.refresh();
       toast({
