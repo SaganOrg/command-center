@@ -20,68 +20,68 @@ export async function POST(request) {
       return uuidRegex.test(str);
     };
 
-    // if (!userId || !isValidUuid(userId)) {
-    //   return NextResponse.json(
-    //     { error: "userId is not valid" },
-    //     { status: 400 }
-    //   );
-    //   }
+    if (!userId || !isValidUuid(userId)) {
+      return NextResponse.json(
+        { error: "userId is not valid" },
+        { status: 400 }
+      );
+      }
 
-    //   const isValidEmail = (str) => {
-    //     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    //     return emailRegex.test(str);
-    //   };
+      const isValidEmail = (str) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(str);
+      };
 
-    //   if (!email || !isValidEmail(email)) {
-    //   return NextResponse.json(
-    //     { error: "Email is not valid" },
-    //     { status: 400 }
-    //   );
-    // }
+      if (!email || !isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Email is not valid" },
+        { status: 400 }
+      );
+    }
 
-    // const { data: user, error: userError } = await supabase
-    //   .from("users")
-    //   .select("*")
-    //   .eq("id", userId)
-    //   .single();
-    // if (userError || !user) {
-    //   return NextResponse.json(
-    //     { error: userError.message },
-    //     { status: 400 }
-    //   );
-    // }
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: userError.message },
+        { status: 400 }
+      );
+    }
 
     const normalizedEmail = email.toLowerCase();
-    // const { data: userFound, error: userFoundError } = await supabase
-    //   .from("users")
-    //   .select("*")
-    //   .ilike("email", normalizedEmail);
+    const { data: userFound, error: userFoundError } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("email", normalizedEmail);
 
-    //   if (userFoundError) {
-    //       return NextResponse.json(
-    //           { error: userError.message },
-    //           { status: 400 }
-    //       );
-    //   }
+      if (userFoundError) {
+          return NextResponse.json(
+              { error: userError.message },
+              { status: 400 }
+          );
+      }
 
-    // if (userFound.length > 0) {
-    //   return NextResponse.json(
-    //     { error: `Email already registered as ${userFound[0].role}` },
-    //     { status: 400 }
-    //   );
-    //   }
+    if (userFound.length > 0) {
+      return NextResponse.json(
+        { error: `Email already registered as ${userFound[0].role}` },
+        { status: 400 }
+      );
+      }
       
       // Prepare email data for Brevo
     const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
-    // const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${userId}/${email}`;
+    const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${userId}/${email}`;
 
-    const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${email}`;
+    // const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${email}`;
 
     const emailData = {
       sender: {
         name: "Command Center Team",
-        // email: "success@cc.getsagan.com",
-        email: "admin@aqza.com"
+        email: "success@cc.getsagan.com",
+        // email: "admin@aqza.com"
       },
       to: [{ email, name: "Sagan" }],
       subject: "Your Invitation to Join the Command Center",
