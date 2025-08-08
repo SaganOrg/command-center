@@ -107,9 +107,7 @@ export async function POST(request) {
       body: JSON.stringify(emailData),
     });
       
-    console.log("Brevo Response Status:", response.status);
-    const responseBody = await response.json();
-    console.log("Brevo Response Body:", responseBody);
+
 
     if (!response.ok) {
       const errorData = await response.json();
