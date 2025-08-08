@@ -126,7 +126,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error deleting task:', error);
     return NextResponse.json(
-      { error: 'Failed to send invitation.' },
+      { error: `Failed to send invitation., ${error}` },
       { status: 400 }
     );
   }
