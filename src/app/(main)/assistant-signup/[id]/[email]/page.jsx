@@ -55,7 +55,7 @@ const AssistantSignup = ({ params }) => {
       .select("*")
       .eq("id", id)
       .maybeSingle();
-    console.log(user);
+    // console.log(user);
     if (userError || !user) {
       setAuthError("Owner Code is not correct or no user found!");
       setIsLoading(false);
@@ -112,10 +112,7 @@ const AssistantSignup = ({ params }) => {
         .eq("id", id);
 
       if (updateError || insertError) {
-        console.error(
-          "Error updating assistant_id in users table:",
-          updateError
-        );
+       
         setAuthError(
           "Signup has a problem"
         );
@@ -123,9 +120,7 @@ const AssistantSignup = ({ params }) => {
         return;
       }
 
-      console.log(
-        `Successfully linked assistant ${assistantId} to employee ${id}`
-      );
+     
     }
 
     // setAuthError("Check your email to confirm your account!");

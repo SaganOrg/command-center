@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request) {
@@ -120,7 +120,7 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in transcribe-and-task API:", error);
+    // console.error("Error in transcribe-and-task API:", error);
     return NextResponse.json(
       { error: error.message || "Failed to process audio and create task" },
       { status: 500 }

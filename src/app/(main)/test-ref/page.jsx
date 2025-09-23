@@ -26,11 +26,11 @@ function ReferenceItems() {
         .eq("id", user.id)
         .single();
       if (error) {
-        console.error("Error fetching user:", error);
+      
         return;
       }
         setUser(data);
-        console.log(data,"alskdjflkasjf alskdjf laksdf lkasjdf")
+
       setUserRole(data.role);
     };
     getUser();

@@ -25,7 +25,7 @@ export default async function Library() {
       .single();
 
     if (publicError) {
-      console.error("Error fetching user data:", publicError);
+      // console.error("Error fetching user data:", publicError);
       throw new Error("Failed to fetch user data");
     }
 
@@ -54,7 +54,7 @@ export default async function Library() {
     const { data: itemsData, error: itemsError } = await query;
 
     if (itemsError) {
-      console.error("Error fetching reference items:", itemsError);
+      // console.error("Error fetching reference items:", itemsError);
       throw new Error("Failed to fetch reference items");
     }
 
@@ -92,7 +92,7 @@ export default async function Library() {
     const { data: tagsData, error: tagsError } = await tagsQuery;
 
     if (tagsError) {
-      console.error("Error fetching tags:", tagsError);
+      // console.error("Error fetching tags:", tagsError);
       throw new Error("Failed to fetch tags");
     }
 

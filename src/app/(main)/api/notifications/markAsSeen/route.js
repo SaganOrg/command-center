@@ -11,7 +11,7 @@ export async function POST(req) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
   const { notificationId, userId } = await req.json();
-  console.log('Notification ID:', notificationId);
+  // console.log('Notification ID:', notificationId);
 
 
 

@@ -72,7 +72,7 @@ export function VoiceRecorder({ userId, userRole, assistantId, hasOpenAI }) {
 
       const timeoutId = setTimeout(() => {
         stopRecording();
-        console.log("Auto-stopped after 45 seconds");
+    
       }, 45000);
 
       mediaRecorderRef.current.addEventListener(
@@ -81,7 +81,7 @@ export function VoiceRecorder({ userId, userRole, assistantId, hasOpenAI }) {
         { once: true }
       );
     } catch (error) {
-      console.error("Error starting recording:", error);
+
       toast({
         variant: "destructive",
         title: "Recording failed",
@@ -151,7 +151,7 @@ export function VoiceRecorder({ userId, userRole, assistantId, hasOpenAI }) {
 
       setRecordingStatus("idle");
     } catch (error) {
-      console.error("Error in transcription or task creation:", error);
+     
       toast({
         variant: "destructive",
         title: "Error",

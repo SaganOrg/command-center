@@ -67,7 +67,7 @@ const Reports = () => {
   const router = useRouter();
 
   const ITEMS_PER_PAGE = 10;
-  const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
+  const apiKey = process.env.BREVO_API_KEY;
 
   // Function to send status update email
   const sendStatusUpdateEmail = async (recipientEmail, newStatus, userId) => {

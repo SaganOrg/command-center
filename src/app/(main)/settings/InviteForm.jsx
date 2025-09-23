@@ -55,7 +55,7 @@ export default function InviteForm({ userRole, userId, assistant }) {
       });
       setEmail("");
     } catch (error) {
-      console.error("Error sending invite:", error);
+      
       toast({
         variant: "destructive",
         title: "Error",
@@ -90,7 +90,7 @@ export default function InviteForm({ userRole, userId, assistant }) {
       });
       setOpenDialog(false);
     } catch (error) {
-      console.error("Error deleting assistant:", error);
+  
       toast({
         variant: "destructive",
         title: "Error",

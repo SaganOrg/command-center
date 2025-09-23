@@ -112,7 +112,7 @@ export default function ReportsClient({
             resetFormData(formattedDate);
           }
         } catch (error) {
-          console.error('Error checking existing report:', error);
+     
           toast.error('Failed to check existing report.', { duration: 3000 });
         }
       }
@@ -208,7 +208,7 @@ export default function ReportsClient({
         setReportDates((prev) => new Set(prev).add(currentDate));
       }
     } catch (error) {
-      console.error(`Error ${reportExists ? 'updating' : 'submitting'} report:`, error);
+   
       toast.error(`Failed to ${reportExists ? 'update' : 'submit'} report: ${error.message}`, {
         duration: 3000,
       });

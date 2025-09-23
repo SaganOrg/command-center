@@ -7,7 +7,7 @@ import { loginWithEmail, signupWithEmail, loginWithGoogle, resetPassword } from 
 import { createBrowserClient } from '@supabase/ssr';
 
 const LoginPage = ({ error }) => {
-  console.log(error);
+  // console.log(error);
 
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,8 +56,8 @@ const LoginPage = ({ error }) => {
 
     try {
       const { session, user } = await loginWithEmail(loginEmail, loginPassword);
-      console.log('Login response:', { session, user });
-      console.log('Cookies after login:', document.cookie);
+      // console.log('Login response:', { session, user });
+      // console.log('Cookies after login:', document.cookie);
 
       // Clear localStorage to remove old session data
       localStorage.removeItem(`sb-<your-project-id>-auth-token`);

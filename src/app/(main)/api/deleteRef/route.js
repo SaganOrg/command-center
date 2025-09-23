@@ -17,7 +17,7 @@ const getStorageFilePath = (url) => {
     const path = urlParts.pathname.split('/').slice(4).join('/');
     return path;
   } catch (error) {
-    console.error('Error parsing URL:', url, error);
+    // console.error('Error parsing URL:', url, error);
     return null;
   }
 };
@@ -113,7 +113,7 @@ export async function POST(request) {
           .from(bucketName)
           .remove(filePaths);
         if (storageError) {
-          console.error('Storage deletion error:', storageError);
+          // console.error('Storage deletion error:', storageError);
           return NextResponse.json(
             { error: `Failed to delete files from storage: ${storageError.message}` },
             { status: 400 }
@@ -163,7 +163,7 @@ export async function POST(request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting task:', error);
+    // console.error('Error deleting task:', error);
     return NextResponse.json(
       { error: 'Failed to delete task' },
       { status: 400 }

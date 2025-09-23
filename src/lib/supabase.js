@@ -15,12 +15,12 @@ export async function checkSession() {
         error,
       } = await supabaseClient.auth.getSession();
       if (error) {
-        console.error('Session check error:', error.message);
+       
         return null;
       }
       return session;
     } catch (err) {
-      console.error('Unexpected error checking session:', err);
+     
       return null;
     }
   }

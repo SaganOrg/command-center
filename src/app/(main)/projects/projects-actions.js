@@ -149,7 +149,7 @@ async function addComment(taskId, comment) {
   if (publicError) {
     throw new Error(publicError.message || 'Failed to fetch user data');
   }
-  console.log(user.user.id);
+
   const newComment = {
     task_id: taskId,
     user_id: publicUser.id,

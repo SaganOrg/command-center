@@ -72,7 +72,7 @@ export async function POST(request) {
       }
       
       // Prepare email data for Brevo
-    const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY;
+    const apiKey = process.env.BREVO_API_KEY;
     const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${userId}/${email}`;
 
     // const signupLink = `https://commandcenter.getsagan.com/assistant-signup/${email}`;
@@ -122,7 +122,7 @@ export async function POST(request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting task:', error);
+    // console.error('Error deleting task:', error);÷\
     return NextResponse.json(
       { error: `Failed to send invitation., ${error}` },
       { status: 400 }

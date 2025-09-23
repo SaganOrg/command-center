@@ -143,12 +143,12 @@ export default function ProjectsClient({
       const task = tasks.reduce((found, t) => (t.id == taskId ? t : found), null);
       const columnTitle =
         columns.find((col) => col.id === newStatus)?.title || newStatus;
-        console.log(task)
+        // console.log(task)
 
       // Create notification for the assigned user (if any)
       if (task?.assigned_to) {
         if(userRole=== 'assistant') {
-console.log(task?.assigned_to)
+// console.log(task?.assigned_to)
         await createNotification({
           recipient_id: userId,
           sender_id: task.assigned_to,
@@ -156,7 +156,7 @@ console.log(task?.assigned_to)
           message: `The project "${task.title}" has been moved to ${columnTitle} }.`,
         });
         } else {
-          console.log(task?.assigned_to)
+          // console.log(task?.assigned_to)
         await createNotification({
           recipient_id: task.assigned_to,
           sender_id: userId,
@@ -180,7 +180,7 @@ console.log(task?.assigned_to)
         description: `Project moved to ${columnTitle}.`,
       });
     } catch (error) {
-      console.error('Error updating task status:', error);
+      // console.error('Error updating task status:', error);
       toast({
         title: 'Error',
         description: 'Failed to move project',
@@ -221,7 +221,7 @@ console.log(task?.assigned_to)
       });
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error('Error reordering tasks:', error);
+      // console.error('Error reordering tasks:', error);
       toast({
         title: 'Error',
         description: 'Failed to reorder tasks',
@@ -263,7 +263,7 @@ console.log(task?.assigned_to)
         description: 'Your project has been saved.',
       });
     } catch (error) {
-      console.error('Error saving task:', error);
+      // console.error('Error saving task:', error);
       toast({
         title: 'Error',
         description: 'Failed to save project',
@@ -289,7 +289,7 @@ console.log(task?.assigned_to)
         description: 'Project has been removed.',
       });
     } catch (error) {
-      console.error('Error deleting task:', error);
+      // console.error('Error deleting task:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete project',
@@ -347,7 +347,7 @@ console.log(task?.assigned_to)
         description: 'Your new project has been created.',
       });
     } catch (error) {
-      console.error('Error creating task:', error);
+      // console.error('Error creating task:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to create project',
@@ -359,18 +359,18 @@ console.log(task?.assigned_to)
   };
 
   const handleAddComment = async (taskId, comment) => {
-    console.log('Adding comment for taskId:', taskId, 'selectedTask.id:', selectedTask?.id); // Debug
+    // console.log('Adding comment for taskId:', taskId, 'selectedTask.id:', selectedTask?.id); // Debug
     try {
       setIsLoading(true);
       const newComment = await addComment(taskId, comment);
-      console.log('New comment:', newComment);
+      // console.log('New comment:', newComment);
       setComments((prev) => [...prev, newComment]);
       toast({
         title: 'Comment added',
         description: 'Your comment has been added.',
       });
     } catch (error) {
-      console.error('Error adding comment:', error);
+      // console.error('Error adding comment:', error);
       toast({
         title: 'Error',
         description: 'Failed to add comment',
@@ -396,7 +396,7 @@ console.log(task?.assigned_to)
         description: 'Your comment has been updated.',
       });
     } catch (error) {
-      console.error('Error editing comment:', error);
+      // console.error('Error editing comment:', error);
       toast({
         title: 'Error',
         description: 'Failed to edit comment',
@@ -418,7 +418,7 @@ console.log(task?.assigned_to)
         description: 'Your comment has been removed.',
       });
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      // console.error('Error deleting comment:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete comment',

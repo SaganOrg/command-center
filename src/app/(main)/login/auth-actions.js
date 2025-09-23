@@ -68,7 +68,7 @@ async function signupWithEmail(email, password, name) {
 
     const { error: signOutError } = await supabase.auth.signOut();
     if (signOutError) {
-      console.error('Logout error:', signOutError.message);
+      // console.error('Logout error:', signOutError.message);
     }
 
     return {

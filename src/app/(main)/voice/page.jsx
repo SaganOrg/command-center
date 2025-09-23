@@ -36,13 +36,12 @@ export default async function Voice() {
     userRole = userData.role;
     assistantId = userData.assistant_id;
   } catch (error) {
-    console.error("Error fetching user data:", error);
+
     redirect("/login");
   }
 
   // Check if OpenAI API key is available
-  const hasOpenAI = !!process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-
+  const hasOpenAI = !!process.env.OPENAI_API_KEY
   return (
     <div className="container mx-auto px-4 md:px-6">
       <div className="mb-8">

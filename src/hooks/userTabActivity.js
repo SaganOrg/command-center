@@ -15,15 +15,15 @@ export function useTabActivity(inactivityThreshold = 3600) {
 
         // Check if the tab was inactive for more than the threshold (e.g., 1 hour)
         if (timeElapsed > inactivityThreshold) {
-          console.log('Tab reactivated after inactivity, checking session...');
+    
           const session = await checkSession();
 
           // If no session or invalid session, reload the page
           if (!session) {
-            console.log('No valid session found, reloading page...');
+           
             window.location.reload();
           } else {
-            console.log('Valid session found, no reload needed.');
+           
           }
         }
 

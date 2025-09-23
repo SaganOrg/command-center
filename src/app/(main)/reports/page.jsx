@@ -33,7 +33,7 @@ export default async function Reports() {
     .single();
 
   if (publicError) {
-    console.error("Error fetching user data:", publicError);
+
     redirect("/login");
   }
 
@@ -51,7 +51,7 @@ export default async function Reports() {
       .single();
 
     if (error && error.code !== "PGRST116") {
-      console.error("Error fetching today's report:", error);
+  
     } else if (data) {
       reportData = data;
     }
@@ -63,7 +63,7 @@ export default async function Reports() {
       .eq("assistant_id", userId);
 
     if (datesError) {
-      console.error("Error fetching report dates:", datesError);
+     
     } else {
       reportDates = new Set(datesData.map((r) => r.date));
     }
@@ -86,7 +86,7 @@ export default async function Reports() {
     });
 
     if (error) {
-      console.error("Error fetching reports:", error);
+    
     } else {
       reports = data || [];
     }

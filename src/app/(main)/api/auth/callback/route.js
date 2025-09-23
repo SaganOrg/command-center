@@ -62,7 +62,7 @@ export async function GET(request) {
           return getRedirectResponse(request, origin, '/settings');
         }
       } catch (error) {
-        console.error('Error:', error.message);
+        // console.error('Error:', error.message);
         await supabase.auth.signOut();
         return NextResponse.redirect(`${origin}/login?error=account_pending`);
       }
