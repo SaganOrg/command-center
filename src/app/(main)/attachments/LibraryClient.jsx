@@ -111,7 +111,7 @@ export default function LibraryClient({ initialUserData, initialReferenceItems, 
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 md:px-6"
     >
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 mt-24">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reference Library</h1>
           <p className="text-muted-foreground mt-1 text-sm">Access and manage shared knowledge, processes, and contacts</p>
