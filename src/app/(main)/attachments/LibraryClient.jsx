@@ -117,7 +117,7 @@ export default function LibraryClient({ initialUserData, initialReferenceItems, 
           <p className="text-muted-foreground mt-1 text-sm">Access and manage shared knowledge, processes, and contacts</p>
         </div>
         <Button className="mt-4 md:mt-0" onClick={handleNewItem} disabled={!userId}>
-          <Plus className="mr-2 h-4 w-4" /> Add New Entry
+          <Plus className="mr-2 h-4 w-4" /> + Add Reference
         </Button>
       </div>
 
