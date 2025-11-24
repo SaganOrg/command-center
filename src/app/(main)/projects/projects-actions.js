@@ -4,8 +4,8 @@ const { createServerClient } = require('@supabase/ssr');
 const { cookies } = require('next/headers');
 
 // Initialize Supabase client
-const createSupabaseClient = () => {
-  const cookieStore = cookies();
+const createSupabaseClient = async () => {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -30,7 +30,7 @@ const createSupabaseClient = () => {
 
 // Update task status
 async function updateTaskStatus(taskId, newStatus) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase
     .from('tasks')
     .update({ status: newStatus })
@@ -43,7 +43,7 @@ async function updateTaskStatus(taskId, newStatus) {
 
 // Reorder tasks
 async function reorderTasks(updatedTasks) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await Promise.all(
     updatedTasks.map((task) =>
       supabase.from('tasks').update({ order: task.order }).eq('id', task.id)
@@ -57,7 +57,7 @@ async function reorderTasks(updatedTasks) {
 
 // Save (update) task
 async function saveTask(updatedTask) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase
     .from('tasks')
     .update({
@@ -81,7 +81,7 @@ async function saveTask(updatedTask) {
 
 // Delete task
 async function deleteTask(taskId) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
 
   if (error) {
@@ -134,7 +134,7 @@ async function deleteTask(taskId) {
 
 // Add comment
 async function addComment(taskId, comment) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { data:user, error: userError } = await supabase.auth.getUser();
   // console.log(user);
   if (userError || !user) {
@@ -172,7 +172,7 @@ async function addComment(taskId, comment) {
 
 // Edit comment
 async function editComment(commentId, updatedComment) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase
     .from('comments')
     .update({
@@ -190,7 +190,7 @@ async function editComment(commentId, updatedComment) {
 
 // Delete comment
 async function deleteComment(commentId) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase.from('comments').delete().eq('id', commentId);
 
   if (error) {
@@ -199,7 +199,7 @@ async function deleteComment(commentId) {
 }
 
 async function createNotification({ recipient_id, sender_id, title, message }) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase
     .from('notifications')
     .insert([{ recipient_id, sender_id, title, message }]);

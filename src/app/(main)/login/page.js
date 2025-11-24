@@ -4,7 +4,7 @@ const Login = async ({
   params,
   searchParams,
 }) => {
- const error = await searchParams?.error
+ const error = (await searchParams)?.error
 
   return (
     <>

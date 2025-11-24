@@ -4,8 +4,8 @@ const { createServerClient } = require('@supabase/ssr');
 const { cookies } = require('next/headers');
 
 // Initialize Supabase client
-const createSupabaseClient = () => {
-  const cookieStore = cookies();
+const createSupabaseClient = async () => {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -24,7 +24,7 @@ const createSupabaseClient = () => {
 
 // Login with email and password
 async function loginWithEmail(email, password) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -39,7 +39,7 @@ async function loginWithEmail(email, password) {
 
 // Signup with email, password, and name
 async function signupWithEmail(email, password, name) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -68,7 +68,6 @@ async function signupWithEmail(email, password, name) {
 
     const { error: signOutError } = await supabase.auth.signOut();
     if (signOutError) {
-      // console.error('Logout error:', signOutError.message);
     }
 
     return {
@@ -84,7 +83,7 @@ async function signupWithEmail(email, password, name) {
 
 // Reset password via email
 async function resetPassword(email) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: 'https://commandcenter.getsagan.com/reset-password',
   });

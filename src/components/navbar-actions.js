@@ -36,7 +36,7 @@ async function signOut() {
   }
 
   // Clear cookies explicitly
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.delete(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`);
 }
 

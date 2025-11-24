@@ -45,10 +45,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { createBrowserClient } from "@supabase/ssr";
+import { deleteUserFromAuth } from "./admin-actions";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SERVICE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 const Reports = () => {
@@ -67,43 +68,33 @@ const Reports = () => {
   const router = useRouter();
 
   const ITEMS_PER_PAGE = 10;
-  const apiKey = process.env.BREVO_API_KEY;
 
-  // Function to send status update email
+  // Function to send status update email via n8n webhook
   const sendStatusUpdateEmail = async (recipientEmail, newStatus, userId) => {
     const signupLink = `https://commandcenter.getsagan.com/login`;
 
-    const emailData = {
-      sender: {
-        name: "Sagan",
-        email: "jon@getsagan.com",
-      },
-      to: [{ email: recipientEmail, name: "User" }],
-      subject: `Welcome to the Executive Command Center`,
-      htmlContent: `
-        <p>Hello,</p>
-        <p>Your account is now <strong>${newStatus}</strong>.</p>
-        ${
-          newStatus === "approved"
-            ? `<p>Please click the link below to start:</p>
-               <p><a href="${signupLink}">${signupLink}</a></p>`
-            : ""
-        }
-        <p>The Command Center is your dedicated workspace for collaborating with your Executive Assistant. Everything you need is in one place - from projects to EOD reports.</p>
-        <p>If you have any questions or need help, let us know! </p> </br></br>
-        <p>Best regards,<br>Sagan Team</p>
-      `,
+    const message = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Email</title>\n</head>\n<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">\n    <tr>\n      <td align="center">\n        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">\n          <tr>\n            <td style="padding: 40px;">\n              <p>Hello,</p>\n              <p>Your account is now <strong>${newStatus}</strong>.</p>\n              ${
+                newStatus === "approved"
+                  ? `<p>Please click the link below to start:</p>\n              <p><a href="${signupLink}">${signupLink}</a></p>`
+                  : ""
+              }\n              <p>The Command Center is your dedicated workspace for collaborating with your Executive Assistant. Everything you need is in one place - from projects to EOD reports.</p>\n              <p>If you have any questions or need help, let us know!</p>\n              <br><br>\n              <p>Best regards,<br>Sagan Team</p>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>`;
+
+    const webhookData = {
+      from: "success@ss.getsagan.com",
+      to: recipientEmail,
+      subject: "Thank you for your interest in Sagan",
+      message: message,
+      cc: "",
+      webhookUrl: "https://saganworld.app.n8n.cloud/webhook/3ac0779f-591a-458f-8290-3d7a8f0bf123"
     };
 
     try {
-      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      const response = await fetch("https://saganworld.app.n8n.cloud/webhook/3ac0779f-591a-458f-8290-3d7a8f0bf123", {
         method: "POST",
         headers: {
-          accept: "application/json",
-          "api-key": apiKey,
-          "content-type": "application/json",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(emailData),
+        body: JSON.stringify(webhookData),
       });
 
       if (response.ok) {
@@ -400,10 +391,10 @@ const Reports = () => {
       return;
     }
 
-    // Delete from Supabase auth
-    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-    if (authError) {
+    // Delete from Supabase auth using server action
+    try {
+      await deleteUserFromAuth(userId);
+    } catch (authError) {
       console.error("Error deleting user from auth:", authError);
       toast({
         variant: "destructive",

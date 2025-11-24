@@ -4,8 +4,8 @@ const { createServerClient } = require('@supabase/ssr');
 const { cookies } = require('next/headers');
 
 // Initialize Supabase client
-const createSupabaseClient = () => {
-  const cookieStore = cookies();
+const createSupabaseClient = async () => {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -24,7 +24,7 @@ const createSupabaseClient = () => {
 
 // Check if a report exists for a given date and assistant_id
 async function checkExistingReport(date, assistantId) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { data, error } = await supabase
     .from('reports')
     .select('*')
@@ -41,7 +41,7 @@ async function checkExistingReport(date, assistantId) {
 
 // Submit or update a report
 async function submitReport(reportData, assistantId, executiveId, isUpdate) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
 
   const reportPayload = {
     date: reportData.date,
@@ -91,7 +91,7 @@ async function submitReport(reportData, assistantId, executiveId, isUpdate) {
 
 // Fetch report history for an executive
 async function fetchReportHistory(executiveId) {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseClient();
   const { data, error } = await supabase
     .from('reports')
     .select('*')

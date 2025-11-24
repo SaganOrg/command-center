@@ -101,7 +101,7 @@ const LoginPage = ({ error }) => {
       setAuthError(message);
       setIsLogin(true);
     } catch (error) {
-      setAuthError(error.message || 'Signup failed. Please try again.');
+      setAuthError( 'Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +123,7 @@ const LoginPage = ({ error }) => {
       const { message } = await resetPassword(forgotEmail);
       setResetMessage(message);
     } catch (error) {
-      setAuthError(error.message || 'Failed to send reset email. Please try again.');
+      setAuthError( 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
