@@ -86,16 +86,17 @@ const Navbar = () => {
           return;
         }
 
-        if (user.status === 'pending' || user.status === 'rejected') {
+        // Only block rejected users, allow pending users
+        if (user.status === 'rejected') {
           await signOut();
           setIsLoggedIn(false);
           setLoggedInUser(null);
           toast({
             variant: 'destructive',
             title: 'Access Denied',
-            description: 'Please wait until your account is approved by an admin',
+            description: 'Your account has been rejected. Please contact support.',
           });
-          router.push('/login?error=account_pending');
+          router.push('/login?error=account_rejected');
         } else {
           setIsLoggedIn(true);
           setLoggedInUser(user);

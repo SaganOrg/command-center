@@ -222,7 +222,7 @@ const Reports = () => {
     fetchReports();
   }, [userId, executiveId, toast]);
 
-  // Handle status update with email notification
+  // Handle status update - only for rejecting users
   const updateStatus = async (userId, newStatus) => {
     if (userRole !== "executive" && userRole !== "admin") {
       console.log("Status update blocked: User role is", userRole);
@@ -233,13 +233,6 @@ const Reports = () => {
       });
       return;
     }
-
-    const currentReport = reports.find((report) => report.id === userId);
-    const currentStatus = currentReport.status || "pending";
-    const shouldSendEmail =
-      (currentStatus === "pending" &&
-        (newStatus === "approved" || newStatus === "rejected")) ||
-      (currentStatus === "rejected" && newStatus === "approved");
 
     const { data, error } = await supabase
       .from("users")
@@ -265,10 +258,6 @@ const Reports = () => {
         )
       );
       setEditingId(null);
-
-      if (shouldSendEmail) {
-        await sendStatusUpdateEmail(currentReport.email, newStatus, userId);
-      }
     }
   };
 
@@ -422,7 +411,7 @@ const Reports = () => {
         report.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (activeTab === "all") return matchesSearch;
-    return matchesSearch && (report.status || "pending") === activeTab;
+    return matchesSearch && (report.status || "approved") === activeTab;
   });
 
   // Pagination
@@ -544,9 +533,8 @@ const Reports = () => {
                   className="w-full"
                   onValueChange={setActiveTab}
                 >
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="pending">Pending</TabsTrigger>
                     <TabsTrigger value="approved">Approved</TabsTrigger>
                     <TabsTrigger value="rejected">Rejected</TabsTrigger>
                   </TabsList>
@@ -578,15 +566,12 @@ const Reports = () => {
                               <TableCell>
                                 <span
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    (report.status || "pending") === "approved"
+                                    (report.status || "approved") === "approved"
                                       ? "bg-green-100 text-green-800"
-                                      : (report.status || "pending") ===
-                                        "rejected"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-amber-100 text-amber-800"
+                                      : "bg-red-100 text-red-800"
                                   }`}
                                 >
-                                  {report.status || "pending"}
+                                  {report.status || "approved"}
                                 </span>
                               </TableCell>
                               <TableCell>
@@ -620,35 +605,37 @@ const Reports = () => {
                                   <>
                                     {editingId !== report.id ? (
                                       <div className="flex gap-2">
-                                        {(report.status || "pending") ===
-                                          "pending" && (
-                                          <>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                updateStatus(
-                                                  report.id,
-                                                  "approved"
-                                                )
-                                              }
-                                            >
-                                              Approve
-                                            </Button>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                updateStatus(
-                                                  report.id,
-                                                  "rejected"
-                                                )
-                                              }
-                                              className="text-red-600 border-red-600 hover:bg-red-50"
-                                            >
-                                              Reject
-                                            </Button>
-                                          </>
+                                        {/* Only show reject button for approved users */}
+                                        {(report.status || "approved") === "approved" && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              updateStatus(
+                                                report.id,
+                                                "rejected"
+                                              )
+                                            }
+                                            className="text-red-600 border-red-600 hover:bg-red-50"
+                                          >
+                                            Reject
+                                          </Button>
+                                        )}
+                                        {/* Show approve button for rejected users */}
+                                        {(report.status || "approved") === "rejected" && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              updateStatus(
+                                                report.id,
+                                                "approved"
+                                              )
+                                            }
+                                            className="text-green-600 border-green-600 hover:bg-green-50"
+                                          >
+                                            Approve
+                                          </Button>
                                         )}
                                         <Button
                                           variant="ghost"
@@ -700,31 +687,36 @@ const Reports = () => {
                                     ) : (
                                       <div className="flex flex-col gap-2">
                                         <div className="flex gap-2">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                              updateStatus(
-                                                report.id,
-                                                "approved"
-                                              )
-                                            }
-                                          >
-                                            Approve
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                              updateStatus(
-                                                report.id,
-                                                "rejected"
-                                              )
-                                            }
-                                            className="text-red-600 border-red-600 hover:bg-red-50"
-                                          >
-                                            Reject
-                                          </Button>
+                                          {/* Show status toggle based on current status */}
+                                          {(report.status || "approved") === "approved" ? (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() =>
+                                                updateStatus(
+                                                  report.id,
+                                                  "rejected"
+                                                )
+                                              }
+                                              className="text-red-600 border-red-600 hover:bg-red-50"
+                                            >
+                                              Reject
+                                            </Button>
+                                          ) : (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() =>
+                                                updateStatus(
+                                                  report.id,
+                                                  "approved"
+                                                )
+                                              }
+                                              className="text-green-600 border-green-600 hover:bg-green-50"
+                                            >
+                                              Approve
+                                            </Button>
+                                          )}
                                         </div>
                                         <div className="flex flex-col gap-2">
                                           <div className="flex gap-2">

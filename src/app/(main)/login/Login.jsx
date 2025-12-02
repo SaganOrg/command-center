@@ -31,8 +31,8 @@ const LoginPage = ({ error }) => {
   };
 
   useEffect(() => {
-    if (error === 'account_pending') {
-      setAuthError('Please wait until your account is approved by an admin');
+    if (error === 'account_rejected') {
+      setAuthError('Your account has been rejected. Please contact support.');
     } else if (error === 'user_not_found') {
       setAuthError('User not found. Please contact support.');
     }

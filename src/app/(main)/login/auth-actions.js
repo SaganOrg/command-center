@@ -58,7 +58,7 @@ async function signupWithEmail(email, password, name) {
         email: data.user.email,
         role: 'executive',
         full_name: name,
-        status: 'pending',
+        status: 'approved', // Changed from 'pending' to 'approved'
       })
       .select();
 
@@ -66,13 +66,14 @@ async function signupWithEmail(email, password, name) {
       throw new Error('Please try again later');
     }
 
-    const { error: signOutError } = await supabase.auth.signOut();
-    if (signOutError) {
-    }
+    // Commented out sign out - users can now login immediately
+    // const { error: signOutError } = await supabase.auth.signOut();
+    // if (signOutError) {
+    // }
 
     return {
       message:
-        'Your account is pending approval. You will receive an email once it is approved by Sagan.',
+        'Your account has been created successfully. You can now log in.',
     };
   }
 

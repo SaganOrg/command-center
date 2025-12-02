@@ -31,9 +31,10 @@ export async function GET(request) {
 
         if (data) {
           // User exists, check status and redirect
-          if (data.status === 'pending' || data.status === 'rejected') {
+          // Only block rejected users, allow pending users
+          if (data.status === 'rejected') {
             await supabase.auth.signOut();
-            return NextResponse.redirect(`${origin}/login?error=account_pending`);
+            return NextResponse.redirect(`${origin}/login?error=account_rejected`);
           }
 
           // Redirect based on role and assistant_id
@@ -52,7 +53,7 @@ export async function GET(request) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             role: 'executive',
-            status: 'pending',
+            status: 'approved', // New users are automatically approved
           });
 
           if (insertError) {
