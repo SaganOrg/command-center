@@ -81,15 +81,15 @@
   .feature-card {
     @apply bg-card rounded-xl shadow-lg p-6 transition-all;
   }
-  
+
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70;
   }
-  
+
   .btn-primary {
     @apply bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-all duration-200 shadow-sm;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-lg hover:bg-secondary/90 transition-all duration-200;
   }
@@ -98,6 +98,80 @@
     @apply border border-input bg-transparent px-6 py-3 rounded-lg hover:bg-accent transition-all duration-200;
   }
 
+  /* Brand Colors - Sagan Official */
+  .text-brand-blue { color: #1E90FF; }
+  .bg-brand-blue { background-color: #1E90FF; }
+  .text-brand-orange { color: #FF6B35; }
+  .bg-brand-orange { background-color: #FF6B35; }
+  .text-brand-green { color: #0A4D3C; }
+  .bg-brand-green { background-color: #0A4D3C; }
+
+  /* Legacy purple for navbar compatibility */
+  .text-brand-purple { color: #1E90FF; }
+  .bg-brand-purple { background-color: #1E90FF; }
+
+  /* Secondary colors */
+  .text-brand-light-blue { color: #4DB8FF; }
+  .bg-brand-light-blue { background-color: #4DB8FF; }
+  .text-brand-dark-green { color: #083D30; }
+  .bg-brand-dark-green { background-color: #083D30; }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-in;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.6s ease-out;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
 
 }
  
